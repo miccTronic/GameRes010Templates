@@ -1,0 +1,117 @@
+void AlignTo(int length, int bytes)
+{
+	local int padding = bytes - (int)(length % bytes);
+	if (padding != bytes) FSkip(padding);
+}
+void Align(int bytes)
+{
+    AlignTo(FTell(), bytes);
+}
+// Null-terminated, 4-byte-aligned string
+typedef struct
+{
+    local int pos0 = FTell();
+	string content;
+    AlignTo(FTell() - pos0, 4);
+} AString4 <read=Str("%s", this.content), fgcolor=cDkRed>;
+
+// String with byte prefix
+typedef struct
+{
+	ubyte length;
+    if (length > 0) {
+        char content[length];
+    } else {
+        local char content;
+    }
+} String8 <read=Str("%s", this.content), fgcolor=cDkRed>;
+// String with ushort prefix
+typedef struct
+{
+	ushort length;
+    if (length > 0) {
+        char content[length];
+    } else {
+        local char content;
+    }
+} String16 <read=Str("%s", this.content), fgcolor=cDkRed>;
+// String with uint prefix
+typedef struct
+{
+	uint length;
+    if (length > 0) {
+        char content[length];
+    } else {
+        local char content;
+    }
+} String32 <read=Str("%s", this.content), fgcolor=cDkRed>;
+// Unicode String with uint prefix
+typedef struct
+{
+	uint length;
+    if (length > 0) {
+        wchar_t content[length];
+    } else {
+        local wchar_t content;
+    }
+} WString32 <read=Str("%s", this.content), fgcolor=cDkRed>;
+
+typedef struct
+{
+	float x, y;
+} Vector2 <read=Str("(%f, %f)", this.x, this.y), fgcolor=0xA00000>;
+typedef struct
+{
+	hfloat x, y;
+} HVector2 <read=Str("(%f, %f)", this.x, this.y), fgcolor=0xA00000>;
+typedef struct
+{
+	float x, y, z;
+} Vector3 <read=Str("(%f, %f, %f)", this.x, this.y, this.z), fgcolor=cBlue>;
+typedef Vector3 Vector;
+typedef struct
+{
+	hfloat x, y, z;
+} hVector3 <read=Str("(%f, %f, %f)", this.x, this.y, this.z), fgcolor=cBlue>;
+typedef struct
+{
+	float x, y, z, w;
+} Vector4 <read=Str("(%f, %f, %f, %f)", this.x, this.y, this.z, this.w), fgcolor=0x800000>;
+typedef struct
+{
+	hfloat x, y, z, w;
+} HVector4 <read=Str("(%f, %f, %f, %f)", this.x, this.y, this.z, this.w), fgcolor=0x800000>;
+
+typedef struct
+{
+	Vector4 row1, row2, row3, row4;
+} Mat4x4 <fgcolor=0xD0D000>;
+typedef struct
+{
+	float x, y, z, d;
+} Plane <read=Str("(%f, %f, %f) + %f", this.x, this.y, this.z, this.d)>;
+typedef struct
+{
+	float x, y, z, w;
+} Quaternion <read=Str("(%f, %f, %f, %f)", this.x, this.y, this.z, this.w)>;
+typedef struct
+{
+	Vector min, max;
+} BBox <read=Str("(%f, %f, %f) --> (%f, %f, %f)", this.min.x, this.min.y, this.min.z, this.max.x, this.max.y, this.max.z)>;
+
+typedef struct
+{
+	float r, g, b;
+} Color3 <read=Str("#%02X%02X%02X", (ubyte)(this.r * 255), (ubyte)(this.g * 255), (ubyte)(this.b * 255))>;
+typedef struct
+{
+	float r, g, b, a;
+} Color4 <read=Str("#%02X%02X%02X%02X", (ubyte)(this.r * 255), (ubyte)(this.g * 255), (ubyte)(this.b * 255), (ubyte)(this.a * 255))>;
+typedef struct
+{
+	ubyte r, g, b;
+} RGB <read=Str("#%02X%02X%02X", this.r, this.g, this.b)>;
+typedef struct
+{
+	ubyte r, g, b, a;
+} RGBA <read=Str("#%02X%02X%02X%02X", this.r, this.g, this.b, this.a)>;
