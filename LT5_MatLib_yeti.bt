@@ -1,0 +1,42 @@
+struct LTString
+{
+	ushort length;
+	char content[length];
+};
+
+BigEndian();
+
+char magic[4]; // BLTM
+int version; // 3
+int count1;
+int materialCount;
+int count3;
+int count4;
+int proptable_offset; // + 32b header
+//int assignments_offset;
+
+// Contains both filenames and property names (and some floats)
+char stringtable[proptable_offset] <fgcolor=cDkRed>;
+
+struct {
+    int fileNameOffset;
+    int shaderNameOffset;
+    //ushort something2;
+    //ushort something3;
+    int propertyCount;
+    struct {
+        int propNameOffset;
+        union {
+            float floatVal;
+            int intVal_or_offset;
+        } value;
+    } properties[propertyCount] <optimize=false>;
+} materials[materialCount] <optimize=false, fgcolor=cDkGreen>;
+
+local int max1, max2;
+struct {
+    ushort v1;
+    ushort v2;
+    max1 = Max(max1, v1);
+    max2 = Max(max2, v2);
+} something[4252] <optimize=false, fgcolor=cDkAqua>;

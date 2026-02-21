@@ -1,0 +1,1056 @@
+#include "!Shared.bt"
+
+// CREDITS: inspired by the AvP2010 tools by https://github.com/Trololp
+
+enum ENTITY_CATEGORY
+{
+	ENTCAT_NONE,
+	ENTCAT_GLOBAL,
+	ENTITY_POINT,
+	ENTCAT_AREA,
+	ENTCAT_UNKNOWN
+};
+
+enum WEAPON_HASH
+{
+    PISTOL = 0x7c87d718,
+    SMG = 0x42e9fe70,
+    FLAMETHROWER = 0xd9a0ae61,
+    SNIPERRIFLE = 0x09c36b00,
+    SHOTGUN = 0x27161a67,
+    PISTOL2 = 0xebd00bef,
+    TASER = 0x06907AD3,
+    FIREBLASTER = 0x085d304f,
+    MINES = 0x53f921d5,
+    DISC = 0x213064b6,
+    SPEAR = 0xf1f493fa,
+    SPEARGUN = 0x80C6D6C7
+};
+
+enum ENTITY_TYPE {
+    ENTITY_TIME_TRIGGER = 1,
+    ENTITY_CUTSCENE_CONTROLLER = 3,
+    ENTITY_PROP = 7,
+    ENTITY_SPLIT_MSG = 11,
+    ENTITY_COUNTED_TRIGGER = 13,
+    ENTITY_SOUND_CONTROLLER = 14,
+    ENTITY_ADVANCED_VOLUME_TRIGGER = 20,
+    ENTITY_LIFT_OBJ = 21,
+    ENTITY_FMV_TRIGGER = 28,
+    ENTITY_MULTI_DAMAGE_VOLUME = 32,
+    ENTITY_PFX_EFFECT = 33,
+    ENTITY_MULTIMANAGER = 34,
+    ENTITY_LOOK_AT_TRIGGER = 35,
+    ENTITY_CLOCK_TRIGGER = 36,
+    ENTITY_LOGIC_TRIGGER = 38,
+    ENTITY_CLIENT_VOLUME_TRIGGER = 40,
+    ENTITY_START_POINT = 41,
+    ENTITY_TIMELINE_TRIGGER = 42,
+    ENTITY_ENV_TEXTURE_ANIM_CONTROL = 43,
+    ENTITY_COUNTED_VOLUME_TRIGGER = 44,
+    ENTITY_DEBUG_MESSAGE_TRIGGER = 47,
+    ENTITY_PROXY_TRIGGER = 52,
+    ENTITY_NODE = 53,
+    ENTITY_NODE_ORIENTED_NODE = 54,
+    ENTITY_NODE_COVERPOINT = 56,
+    ENTITY_NODE_GUARD_ZONE = 57,
+    ENTITY_NODE_SPLINE = 59,
+    ENTITY_DIALOGUE_TRIGGER = 62,
+    ENTITY_NODE_LIFT_NODE = 63,
+    ENTITY_NODE_LIFT_SPLINE = 64,
+    ENTITY_AFFECTOR = 65,
+    ENTITY_AFFECTOR_WIND = 66,
+    ENTITY_FX_PROJECTOR = 67,
+    ENTITY_TELEPORTER = 68,
+    ENTITY_TELEPORT_DESTINATION = 69,
+    ENTITY_DEBUG_WAYPOINT_TRIGGER = 70,
+    ENTITY_FX_DYNAMIC_LIGHT = 71,
+    ENTITY_FORCE_FIELD_CONVEYOR = 72,
+    ENTITY_ATTRACTOR_CONTROLLER = 73,
+    ENTITY_CONSOLE_VARIABLE = 74,
+    ENTITY_FX_LIGHT_SHAFT = 75,
+    ENTITY_STREAMING_BACKGROUND_SOUND_CONTROLLER = 76,
+    ENTITY_WAYPOINT_BLOCKER_VOLUME = 77,
+    ENTITY_VOLUME_TRIGGER = 78,
+    ENTITY_OBJECTIVE = 79,
+    ENTITY_LIGHT_OBJ_WITH_MODEL = 83,
+    ENTITY_DYNAMIC_MUSIC_TRIGGER = 84,
+    ENTITY_DIALOGUE_CONTROLLER = 85,
+    ENTITY_FMV_CONTROLLER = 86,
+    ENTITY_EFFECT_VOLUME = 87,
+    ENTITY_FMV_SPEAKER = 88,
+    ENTITY_ALIEN = 92,
+    ENTITY_FACEHUGGER = 94,
+    ENTITY_ALIEN_QUEEN = 95,
+    ENTITY_MARINE = 96,
+    ENTITY_PREDATOR = 97,
+    ENTITY_PROJECTILE_MINE = 98,
+    ENTITY_NODE_G_S_2_SPLINE = 100,
+    ENTITY_INTERACTION_TRIGGER = 103,
+    ENTITY_SPAWN_POINT = 104,
+    ENTITY_NODE_ORIENTED_NODE_2 = 112,
+    ENTITY_NODE_GUARD_ZONE_2 = 113,
+    ENTITY_NODE_G_S_2_NODE = 114,
+    ENTITY_DAMAGEABLE_OBJECT = 115,
+    ENTITY_VEHICLE_DROPSHIP = 120,
+    ENTITY_INTERACT_OBJECT = 122,
+    ENTITY_NODE_G_S_2_ATTRACTOR = 124,
+    ENTITY_CHECK_POINT_NODE = 126,
+    ENTITY_ID_129 = 129,
+    ENTITY_ENTITY_TEAM_ALIEN = 130,
+    ENTITY_ALIEN_SPAWN_POINT = 131,
+    ENTITY_GAME_PLAY_VOLUME = 132,
+    ENTITY_ENTITY_SQUAD_MARINE = 133,
+    ENTITY_ENTITY_TEAM_MARINE = 134,
+    ENTITY_ANDROID = 135,
+    ENTITY_ENTITY_LOOK_AT = 136,
+    ENTITY_NODE_FORMATION_POINT = 137,
+    ENTITY_NODE_VANTAGE_POINT_PREDATOR = 138,
+    ENTITY_NODE_OBJECTIVE = 139,
+    ENTITY_NODE_OBJECTIVE_MARINE = 140,
+    ENTITY_CIVILIAN = 141,
+    ENTITY_MARINE_2 = 142,
+    ENTITY_HUMAN_SPAWN_POINT = 143,
+    ENTITY_NODE_COVERPOINT_NODE = 144,
+    ENTITY_NODE_FLEE_POINT = 145,
+    ENTITY_ENTITY_VENT = 146,
+    ENTITY_SPAWN_CONTROLLER = 147,
+    ENTITY_SPAWN_POINT_2 = 148,
+    ENTITY_ENTITY_SQUAD_ALIEN = 149,
+    ENTITY_SENTRY_GUN = 151,
+    ENTITY_ENTITY_GAME_MODE = 152,
+    ENTITY_ENTITY_SQUAD_FACE_HUGGER = 155,
+    ENTITY_COLLECTABLE_MARINE_AND_PREDATOR = 156,
+    ENTITY_ENTITY_SHOOT_AT = 157,
+    ENTITY_PLAYER_OBJECTIVE = 158,
+    ENTITY_INTERACT_PREDATOR_LOCK = 160,
+    ENTITY_INTERACT_BATTERY_RECEPTACLE = 162,
+    ENTITY_INTERACT_HACKING_POINT = 163,
+    ENTITY_ENTITY_COMMAND_POST = 164,
+    ENTITY_INTERACT_RETINAL_SCANNER = 165,
+    ENTITY_ENTITY_ROOM_NODE = 166,
+    ENTITY_ENTITY_MOTION_TRACKER_BLIP = 167,
+    ENTITY_ENTITY_PLAYER_PROXY = 168,
+    ENTITY_LOCATION_MARKER = 169,
+    ENTITY_WAYPOINT_BLOCKER_VOLUME_2 = 170,
+    ENTITY_PREDALIEN = 172,
+    ENTITY_INTERACT_INVISI_SWITCH = 173,
+    ENTITY_ENTITY_CAM_POINT = 175,
+    ENTITY_PRAETORIAN = 176,
+    ENTITY_NODE_3_D_COVERPOINT_NODE = 178
+};
+
+
+local ENTITY_CATEGORY entity_categories[180];
+entity_categories[0] = ENTCAT_UNKNOWN;
+entity_categories[1] = ENTCAT_GLOBAL;
+entity_categories[2] = ENTCAT_UNKNOWN;
+entity_categories[3] = ENTCAT_GLOBAL;
+entity_categories[4] = ENTCAT_UNKNOWN;
+entity_categories[5] = ENTCAT_UNKNOWN;
+entity_categories[6] = ENTCAT_UNKNOWN;
+entity_categories[7] = ENTITY_POINT;
+entity_categories[8] = ENTCAT_UNKNOWN;
+entity_categories[9] = ENTCAT_UNKNOWN;
+entity_categories[10] = ENTCAT_UNKNOWN;
+entity_categories[11] = ENTCAT_GLOBAL;
+entity_categories[12] = ENTCAT_UNKNOWN;
+entity_categories[13] = ENTCAT_UNKNOWN;
+entity_categories[14] = ENTITY_POINT;
+entity_categories[15] = ENTCAT_UNKNOWN;
+entity_categories[16] = ENTCAT_UNKNOWN;
+entity_categories[17] = ENTCAT_UNKNOWN;
+entity_categories[18] = ENTCAT_UNKNOWN;
+entity_categories[19] = ENTCAT_UNKNOWN;
+entity_categories[20] = ENTITY_POINT;
+entity_categories[21] = ENTITY_POINT;
+entity_categories[22] = ENTCAT_UNKNOWN;
+entity_categories[23] = ENTCAT_UNKNOWN;
+entity_categories[24] = ENTCAT_UNKNOWN;
+entity_categories[25] = ENTCAT_UNKNOWN;
+entity_categories[26] = ENTCAT_UNKNOWN;
+entity_categories[27] = ENTCAT_UNKNOWN;
+entity_categories[28] = ENTCAT_UNKNOWN;
+entity_categories[29] = ENTCAT_UNKNOWN;
+entity_categories[30] = ENTCAT_UNKNOWN;
+entity_categories[31] = ENTCAT_UNKNOWN;
+entity_categories[32] = ENTCAT_GLOBAL;
+entity_categories[33] = ENTITY_POINT;
+entity_categories[34] = ENTCAT_GLOBAL;
+entity_categories[35] = ENTITY_POINT;
+entity_categories[36] = ENTCAT_UNKNOWN;
+entity_categories[37] = ENTCAT_UNKNOWN;
+entity_categories[38] = ENTCAT_UNKNOWN;
+entity_categories[39] = ENTCAT_UNKNOWN;
+entity_categories[40] = ENTCAT_UNKNOWN;
+entity_categories[41] = ENTCAT_UNKNOWN;
+entity_categories[42] = ENTCAT_GLOBAL;
+entity_categories[43] = ENTCAT_UNKNOWN;
+entity_categories[44] = ENTCAT_UNKNOWN;
+entity_categories[45] = ENTCAT_UNKNOWN;
+entity_categories[46] = ENTCAT_UNKNOWN;
+entity_categories[47] = ENTCAT_UNKNOWN;
+entity_categories[48] = ENTCAT_UNKNOWN;
+entity_categories[49] = ENTCAT_UNKNOWN;
+entity_categories[50] = ENTCAT_UNKNOWN;
+entity_categories[51] = ENTCAT_UNKNOWN;
+entity_categories[52] = ENTCAT_UNKNOWN;
+entity_categories[53] = ENTCAT_UNKNOWN;
+entity_categories[54] = ENTCAT_UNKNOWN;
+entity_categories[55] = ENTCAT_UNKNOWN;
+entity_categories[56] = ENTCAT_UNKNOWN;
+entity_categories[57] = ENTCAT_UNKNOWN;
+entity_categories[58] = ENTCAT_UNKNOWN;
+entity_categories[59] = ENTCAT_UNKNOWN;
+entity_categories[60] = ENTCAT_UNKNOWN;
+entity_categories[61] = ENTCAT_UNKNOWN;
+entity_categories[62] = ENTCAT_UNKNOWN;
+entity_categories[63] = ENTITY_POINT;
+entity_categories[64] = ENTITY_POINT;
+entity_categories[65] = ENTCAT_UNKNOWN;
+entity_categories[66] = ENTCAT_UNKNOWN;
+entity_categories[67] = ENTCAT_UNKNOWN;
+entity_categories[68] = ENTCAT_GLOBAL;
+entity_categories[69] = ENTITY_POINT;
+entity_categories[70] = ENTITY_POINT;
+entity_categories[71] = ENTITY_POINT;
+entity_categories[72] = ENTITY_POINT;
+entity_categories[73] = ENTCAT_UNKNOWN;
+entity_categories[74] = ENTCAT_GLOBAL;
+entity_categories[75] = ENTITY_POINT;
+entity_categories[76] = ENTCAT_UNKNOWN;
+entity_categories[77] = ENTITY_POINT;
+entity_categories[78] = ENTITY_POINT;
+entity_categories[79] = ENTCAT_UNKNOWN;
+entity_categories[80] = ENTCAT_UNKNOWN;
+entity_categories[81] = ENTCAT_UNKNOWN;
+entity_categories[82] = ENTCAT_UNKNOWN;
+entity_categories[83] = ENTITY_POINT;
+entity_categories[84] = ENTCAT_UNKNOWN;
+entity_categories[85] = ENTCAT_GLOBAL;
+entity_categories[86] = ENTCAT_UNKNOWN;
+entity_categories[87] = ENTCAT_UNKNOWN;
+entity_categories[88] = ENTCAT_UNKNOWN;
+entity_categories[89] = ENTCAT_UNKNOWN;
+entity_categories[90] = ENTCAT_UNKNOWN;
+entity_categories[91] = ENTCAT_UNKNOWN;
+entity_categories[92] = ENTITY_POINT;
+entity_categories[93] = ENTCAT_UNKNOWN;
+entity_categories[94] = ENTITY_POINT;
+entity_categories[95] = ENTITY_POINT;
+entity_categories[96] = ENTCAT_UNKNOWN;
+entity_categories[97] = ENTITY_POINT;
+entity_categories[98] = ENTCAT_UNKNOWN;
+entity_categories[99] = ENTCAT_UNKNOWN;
+entity_categories[100] = ENTITY_POINT;
+entity_categories[101] = ENTCAT_UNKNOWN;
+entity_categories[102] = ENTCAT_UNKNOWN;
+entity_categories[103] = ENTCAT_UNKNOWN;
+entity_categories[104] = ENTCAT_UNKNOWN;
+entity_categories[105] = ENTCAT_UNKNOWN;
+entity_categories[106] = ENTCAT_UNKNOWN;
+entity_categories[107] = ENTCAT_UNKNOWN;
+entity_categories[108] = ENTCAT_UNKNOWN;
+entity_categories[109] = ENTCAT_UNKNOWN;
+entity_categories[110] = ENTCAT_UNKNOWN;
+entity_categories[111] = ENTCAT_UNKNOWN;
+entity_categories[112] = ENTCAT_UNKNOWN;
+entity_categories[113] = ENTCAT_UNKNOWN;
+entity_categories[114] = ENTITY_POINT;
+entity_categories[115] = ENTITY_POINT;
+entity_categories[116] = ENTCAT_UNKNOWN;
+entity_categories[117] = ENTCAT_UNKNOWN;
+entity_categories[118] = ENTCAT_UNKNOWN;
+entity_categories[119] = ENTCAT_UNKNOWN;
+entity_categories[120] = ENTCAT_UNKNOWN;
+entity_categories[121] = ENTCAT_UNKNOWN;
+entity_categories[122] = ENTITY_POINT;
+entity_categories[123] = ENTCAT_UNKNOWN;
+entity_categories[124] = ENTITY_POINT;
+entity_categories[125] = ENTCAT_UNKNOWN;
+entity_categories[126] = ENTITY_POINT;
+entity_categories[127] = ENTCAT_UNKNOWN;
+entity_categories[128] = ENTCAT_UNKNOWN;
+entity_categories[129] = ENTCAT_UNKNOWN;
+entity_categories[130] = ENTCAT_GLOBAL;
+entity_categories[131] = ENTCAT_UNKNOWN;
+entity_categories[132] = ENTITY_POINT;
+entity_categories[133] = ENTCAT_GLOBAL;
+entity_categories[134] = ENTCAT_UNKNOWN;
+entity_categories[135] = ENTITY_POINT;
+entity_categories[136] = ENTITY_POINT;
+entity_categories[137] = ENTCAT_UNKNOWN;
+entity_categories[138] = ENTITY_POINT;
+entity_categories[139] = ENTCAT_UNKNOWN;
+entity_categories[140] = ENTITY_POINT;
+entity_categories[141] = ENTITY_POINT;
+entity_categories[142] = ENTITY_POINT;
+entity_categories[143] = ENTCAT_UNKNOWN;
+entity_categories[144] = ENTITY_POINT;
+entity_categories[145] = ENTITY_POINT;
+entity_categories[146] = ENTITY_POINT;
+entity_categories[147] = ENTCAT_GLOBAL;
+entity_categories[148] = ENTITY_POINT;
+entity_categories[149] = ENTCAT_GLOBAL;
+entity_categories[150] = ENTCAT_UNKNOWN;
+entity_categories[151] = ENTITY_POINT;
+entity_categories[152] = ENTCAT_UNKNOWN;
+entity_categories[153] = ENTCAT_UNKNOWN;
+entity_categories[154] = ENTCAT_UNKNOWN;
+entity_categories[155] = ENTCAT_UNKNOWN;
+entity_categories[156] = ENTITY_POINT;
+entity_categories[157] = ENTITY_POINT;
+entity_categories[158] = ENTITY_POINT;
+entity_categories[159] = ENTCAT_UNKNOWN;
+entity_categories[160] = ENTCAT_UNKNOWN;
+entity_categories[161] = ENTCAT_UNKNOWN;
+entity_categories[162] = ENTITY_POINT;
+entity_categories[163] = ENTITY_POINT;
+entity_categories[164] = ENTCAT_UNKNOWN;
+entity_categories[165] = ENTITY_POINT;
+entity_categories[166] = ENTITY_POINT;
+entity_categories[167] = ENTITY_POINT;
+entity_categories[168] = ENTCAT_UNKNOWN;
+entity_categories[169] = ENTITY_POINT;
+entity_categories[170] = ENTITY_POINT;
+entity_categories[171] = ENTCAT_UNKNOWN;
+entity_categories[172] = ENTCAT_UNKNOWN;
+entity_categories[173] = ENTITY_POINT;
+entity_categories[174] = ENTCAT_UNKNOWN;
+entity_categories[175] = ENTCAT_UNKNOWN;
+entity_categories[176] = ENTITY_POINT;
+entity_categories[177] = ENTCAT_UNKNOWN;
+entity_categories[178] = ENTCAT_UNKNOWN;
+entity_categories[179] = ENTCAT_UNKNOWN;
+
+
+
+typedef struct {
+    int count;
+    uint messages[count];
+} BE_Messages;
+
+typedef struct {
+    local string xname <hidden=true>;
+    local int chunkStart = FTell();
+    char chunkId[4] <bgcolor=0xA0FFA0>;
+    if (chunkId == "\0\0\0\0") {
+        xname = "EOF";
+        local int chunkSize = 0, major = 0, minor = 0;
+        Exit(0);
+    }
+    int chunkSize; Assert(chunkSize >= 16);
+    int major, minor;
+    if (chunkId == "FNFO") {
+        struct {
+            int size;
+            int version; //Assert(version == 8); <-- for AvP2010
+        } data;
+        xname = Str("version = %i", data.version);
+    } else if (chunkId == "RSCF") {
+        struct {
+            int kind; // 0=internal, 2=image, 3=sound
+            int type; // if kind == 0: 7=carpet/grass, 8=botanicals, 11=env, 12=MRT, 13=decals, 14=MRPS, 15=model
+            int size;
+            AString4 name;
+            if (name.content == "Env") {
+                struct {
+	                int num_vertex_bufs;
+                    Assert(num_vertex_bufs == 1);
+	                int num_vertices; // Can be size_vertex_buf[num] maybe idk need check !!!
+	                int num_index_bufs;
+                    Assert(num_index_bufs == 1);
+	                int num_indices;
+	                int num_meshes;
+                    struct {
+	                    int triangles_count;
+	                    int vertex_buf_idx;
+	                    int vertex_start;
+	                    int vertex_count;
+	                    int index_buf_idx;
+	                    int index_start; // count is triangles_count * 3
+	                    int mat1_hash;
+	                    int mat2_hash;
+	                    int emod_id; // EMOD_id
+                        BBox bbox; // could be unusual order
+                    } meshes[num_meshes] <read=Str("Verts = [%i..%i] = %i, Indices = [%i..%i] = %i", this.vertex_start, this.vertex_start + this.vertex_count, this.vertex_count, this.index_start, this.index_start + (this.triangles_count * 3), this.triangles_count * 3)>;
+                    struct {
+	                    Vector3 pos;
+	                    RGBA color;
+	                    short normal[4];
+	                    short tangent[4];
+	                    short bitangent[4];
+	                    Vector4 texcoord_1;
+	                    Vector4 texcoord_2;
+	                    Vector4 texcoord_3;
+	                    Vector4 texcoord_4;
+                    } vertices[num_vertices] <read=Str("(%f %f %f)", this.pos.x, this.pos.y, this.pos.z)>;
+                    ushort indices[num_indices];
+                } Env;
+            } else if (name.content == "Bot") {
+                // Botanicals?
+                // see https://github.com/Trololp/AVP2010MapViewer/blob/main/docs/Botanicals_AVP2010.c
+            } else if (kind == 0 && major == 2 && minor == 0 && type == 15) {
+                struct {
+	                int num_meshes;
+	                int num_vertices;
+	                int num_indices;
+	                int num_unknown;
+	                int num_unk_chunks; //Assert(num_unk_chunks == 0);
+	                byte b_vertex_layout; // 1 = triangle strip, 1 = tri list
+                    local int sum_unk2 = 0;
+                    struct {
+	                    uint mat_hash;
+	                    uint unk1; // maybe also hash?
+	                    int points_count;
+	                    int flags;
+	                    int unk2;
+	                    int unk3; // often -1. could point into unk_arrays
+                        sum_unk2 += unk2;
+                    } meshes[num_meshes] <read=Str("Mat = %i, #Verts = %i, Flags = %i, Unks = %i  %i  %i", this.mat_hash, this.points_count, this.flags, this.unk1, this.unk2, this.unk3), optimize=false>;
+                    struct {
+	                    Vector4 pos; // actually Vec3, but padded
+                        ubyte blend_indices[4];
+                        short blend_weights[4];
+	                    HVector4 tangent;
+	                    HVector4 bitangent;
+	                    HVector4 normal;
+	                    HVector4 texcoord_1;
+                        float texcoord_2;
+                    } vertices[num_vertices]; // <read=Str("(%f %f %f)", this.pos.x, this.pos.y, this.pos.z)>;
+                    ushort indices[num_indices];
+                    struct {
+                        int count;
+                        uint value[count];
+                    } unk_arrays[num_unk_chunks] <optimize=false>;
+                } Model;
+            } else {
+                byte data[size];
+            }
+        } data <bgcolor=0xFFEEEE>;
+        xname = Str("RSCF Type %i/%i - %s", data.kind, data.type, data.name.content);
+    } else if (chunkId == "RSFL") {
+        // Resource File Index?
+        int count;
+        struct {
+            AString4 name;
+            int offset; // + size of this chunk?
+            local int real_offset = offset + chunkSize;
+            int size;
+            int unk;
+        } data[count] <read=Str("%s", this.name.content), bgcolor=0xEEFFEE, optimize=false>;
+        xname = Str("Count = %i", count);
+    } else if (chunkId == "EMOD") {
+        // Environment Model? (Bounding boxes etc.)
+        // Handles collisions, related to objects inside Map RSCF.
+        // In other older Asura engine games, this file can contain collision geometry different from simble boundary boxes.
+        int count;
+        AString4 package_name;
+        struct {
+            AString4 emod_name;
+            Vector3 pos;
+            int unk1, unk2, unk3, unk4, unk5; // 0, 1, 0, 0x44, 9
+            int zeros[5];
+            ushort flags; // // 0x2a = collision?
+            short h_unk; // -1
+            int unkB1;
+            BBox bbox;
+            float radius;
+            int zero1, zero2;
+        } data[count] <read=Str("%s", this.emod_name.content), bgcolor=0xDDDDDD, optimize=false>;
+        xname = Str("%s   count = %i", package_name.content, count);
+    } else if (chunkId == "PHEN") {
+        // Physical Environment? Probably just for collision stuff
+	    int num_volumes; // volumes that contain collision mesh
+	    int num_vertices;
+	    int num_indexes;
+	    int num_flags;
+	    int num_mat_hashes;
+	    int num_unk;
+        struct {
+	        int indexes_offset;
+	        int point_offset;
+	        int id1;
+	        int id2;
+	        BBox bbox;
+	        int flags_offset;
+	        int unk;
+	        int flags; // like 0 or 1 all time?
+        } volumes[num_volumes] <optimize=false>;
+        Vector3 vertices[num_vertices];
+        struct {
+	        ushort i1, i2, i3, i4;
+            // if i4 == 0xFFFF then it mean that it describes triangle insted it describes quad
+        } indices[num_indexes] <optimize=true>;
+        ubyte byte_flags[(num_indexes + 3) & ~3];
+        ushort short_flags[num_flags];
+        Align(4);
+        uint mat_hashes[num_mat_hashes]; // used for sound of walking and bullet hits
+        ushort unks1[num_mat_hashes];
+        Align(4);
+        ubyte unks2[num_unk*12];
+        byte b[28];
+        xname = Str("volumes = %i, verts = %i", num_volumes, num_vertices);
+    } else if (chunkId == "ASTS") {
+        // Spech File Array?
+        int count;
+        struct {
+            AString4 name;
+            ubyte dummy;
+            int size;
+            int offset;
+        } data[count] <read=Str("%s", this.name.content), bgcolor=0xEEFFEE, optimize=false>;
+        xname = Str("Count = %i", count);
+    } else if (chunkId == "HANM") {
+        // Model Animations
+        struct {
+            local int have_extra_bone_anim = (minor & 0x10);
+            int num_bones;
+            local int num_bones_b = have_extra_bone_anim ? num_bones + 1 : num_bones;
+            float total_time;
+            AString4 name;
+            struct {
+                int num_frames;
+                byte not_change_length;
+                struct {
+                    Quaternion rot;
+                    float perc;
+                } rotations[num_frames];
+                local int num_bone_delta_lens = not_change_length ? 1 : num_frames;
+                Vector3 bone_lengths[num_bone_delta_lens];
+            } transforms[num_bones_b] <optimize=false>;
+            float fUnk1;
+            int iUnk2;
+            if (minor & 1) float some_weights_maybe[num_bones];
+            int count2;
+            Vector3 unk_data_2[count2];
+            if (minor & 8) BBox bbox;
+            float fUnk2;
+            int count3;
+            Vector4 unk_data_3[count3];
+            if (minor & 0x40) {
+                int data_40[num_bones];
+                AString4 strings_40[num_bones];
+            }
+            if (minor & 0x80) ubyte data_80[16 * num_bones];
+            if (minor & 0x400) ubyte data_400[28 * num_bones];
+            if (minor & 0x800) ubyte data_800[28 * num_bones];
+            if (major >= 17) {
+                byte b_17;
+                int dw_17a, dw_17b;
+            }
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "HSKL") {
+        struct {
+            AString4 model;
+            AString4 lod_model;
+            uint unk;
+            float distance_maybe;
+        } data <bgcolor=0xEEEEFF>;
+        xname = Str("%s --> %s @ %f", data.model.content, data.lod_model.content, data.distance_maybe);
+    } else if (chunkId == "HSKN") {
+        // Model Skeleton
+        typedef struct {
+            // Inner model???
+            int type2;
+            if (type2 >= 3) {
+                int num_vertices;
+                int num_indices;
+                int val1;
+                int val2;
+                if (type2 >= 9) int val3;
+                else local int val3 = 0;
+                short w1, w2;
+                if (type2 >= 9) int thunk;
+                BBox bbox;
+                float radius;
+                Vector3 points[num_vertices];
+                ushort indices[num_indices * 4];
+                if (val1) short unk1_shorts[num_indices];
+                if (val2) short unk2_shorts[num_indices]; // sequence number of state per point ?
+                if (val3) int unk3_ints[num_indices]; // hashes
+                if (type2 >= 8) {
+                    int dummy;
+                    int val4;
+                    if (val4) int unk4_ints[num_indices];
+                }
+            }
+        } InnerModel;
+        struct {
+            int num1;
+            int num_bones;
+            AString4 name;
+            uint parents[num_bones];
+            struct {
+                Vector3 pos;
+                Quaternion rot;
+            } posrot[num_bones];
+            if (major >= 10) byte unk_byte;
+            if (minor & 1) {
+                struct {
+                    AString4 name;
+                    if (major >= 10) byte unk_byte;
+                    int tmp;
+                    if (tmp) InnerModel inner_model;
+                } names[num_bones] <read=Str("%s", this.name.content), optimize=false>;
+            }
+            if (major >= 5 && (minor & 2)) BBox bbox;
+            if (major >= 6 && (minor & 4)) {
+                int iUnk;
+                InnerModel inner_model;
+            }
+            if (major >= 7) uint bones_remap[num_bones];
+            if (major >= 8 && (minor & 0x10)) ubyte data_m8[num_bones * 28];
+            if (major >= 9 && (minor & 0x20)) ubyte data_m9[num_bones * 4];
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "HSBB") {
+        // Model Bones / Bounding Boxes
+        struct {
+            AString4 name;
+            int num_bones;
+            struct {
+		        float x1;
+		        float x2;
+		        float y1;
+		        float y2;
+		        float z1;
+		        float z2;
+		        int active;
+            } bone_data[num_bones];
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "HMPT") {
+        struct {
+            int count;
+            AString4 name;
+            struct {
+		        Vector3 pos;
+		        float unk1;
+		        Quaternion q1, q2;
+		        int unk2;
+		        AString4 str;
+            } pt_data[count] <optimize=false>;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "HSND") {
+        struct {
+            int count;
+            AString4 name;
+            struct {
+                int i1;
+                float f1, f2, f3, f4;
+                uint hash;
+                int i2;
+            } sounds[count] <optimize=false>;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "FXPT" || chunkId == "FXST" || chunkId == "FXET") {
+        // Particle Effect (FXPT)
+        struct {
+            int unk1;
+            AString4 name;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "SDSM") {
+        // Physics-related sounds...?
+        struct {
+            AString4 name;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "SDEV") {
+        struct {
+            AString4 name;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "DLEV") {
+        // Dialog Event
+        struct {
+            AString4 name;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "CTEV") {
+        struct {
+            // not always...
+            int unk1;
+            int unk2;
+            AString4 name;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "CUTS") {
+        // Cutscene?
+        struct {
+            ubyte unk[19];
+            AString4 name;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "TEXT") {
+        // String array
+        int count;
+        AString4 strings[count] <optimize=false>; 
+        xname = Str("String Count = %i", count);
+    } else if (chunkId == "RVBP") {
+        struct {
+            int unk1;
+            AString4 name;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "TXAN") {
+        // Texture Animation
+        struct {
+            AString4 name;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name.content);
+    } else if (chunkId == "DLLT") {
+        // Dialog related...
+        struct {
+            AString4 name1;
+            AString4 name2;
+            float f1, f2, f3, f4;
+            int i1;
+            uint hashOrZero <bgcolor=cLtBlue>;
+            int unk1;
+            uint flags;
+            int unk2;
+            byte b1, b2, b3;
+        } data <bgcolor=0xDDDDDD>;
+        xname = Str("%s", data.name1.content);
+    } else if (chunkId == "DLLN") {
+        // Dialog Line
+        struct {
+            AString4 string_id;
+            // One of the following is probably RSCF ref
+            // another maybe DLLT ref?
+            uint unk1, unk2, unk3;
+            uint unk4, unk5;
+            ubyte zero3;
+            float length_maybe;
+            WString32 text;
+        } data <bgcolor=0xCCCCFF>;
+        xname = Str("%s = %s", data.string_id.content, data.text.content);
+    } else if (chunkId == "HTXT") {
+        // Text (often used for subtitles and cutscenes)
+        int count;
+        int dummy1, dummy2;
+        struct {
+            uint id;
+            WString32 text;
+        } data[count] <read=Str("%s", this.text.content), bgcolor=0xCCCCCC, optimize=false>;
+        xname = Str("count = %i", count);
+    } else if (chunkId == "LTXT") {
+        // Text
+        Assert(0); // TODO - untested
+        int count;
+        int dummy1, dummy2;
+        struct {
+            WString32 text;
+        } data[count] <read=Str("%s", this.text.content), bgcolor=0xCCCCCC, optimize=false>;
+        xname = Str("count = %i", count);
+    } else if (chunkId == "PTXT") {
+        // Text (often used for subtitles and cutscenes)
+        int count;
+        int dummy1, dummy2; // + some GUID?
+        char unk[12];
+        struct {
+            WString32 text;
+        } data[count] <read=Str("%s", this.text.content), bgcolor=0xCCCCCC, optimize=false>;
+        xname = Str("count = %i", count);
+    } else if (chunkId == "GISN") {
+        // Global Illumination
+        int count;
+        int i_unk;
+        byte unk[60];
+        struct {
+            Vector3 pos;
+            Vector4 spherical_harmonics_red;
+            Vector4 spherical_harmonics_green;
+            Vector4 spherical_harmonics_blue;
+        } data[count];
+        xname = Str("count = %i", count);
+    } else if (chunkId == "CONA") {
+        int type;
+        switch (type) {
+            case 1:
+                //ubyte cona[44]; break;
+                int two;
+                uint hash1;
+                uint hash2_or_zero;
+                uint bool1;
+                uint flags1;
+                uint flags2;
+                Vector2 vec2;
+                uint hash3_or_zero;
+                int zero;
+                uint my_hash <bgcolor=0xFFF0FF, fgcolor=0xA030A0>;
+                break;
+            case 2:
+                //ubyte cona[20]; break;
+                int one;
+                uint hash1 <bgcolor=0xFFCCFF, fgcolor=0xA030A0>;
+                uint bool1;
+                int zero;
+                uint my_hash <bgcolor=0xFFF0FF, fgcolor=0xA030A0>;
+                break;
+            case 3:
+                // TODO - dynamic
+                // Somehow dispatches to several other CONA blocks
+                int one;
+                int num_hashes;
+                uint hashes[num_hashes] <bgcolor=0xFFCCFF, fgcolor=0xA030A0>;
+                int one2;
+                int count2;
+                // TODO!
+                //int one3;
+                //int values[28 * count2];
+                //int zero;
+                //uint my_hash <bgcolor=0xFFF0FF, fgcolor=0xA030A0>;
+                break;
+            case 4:
+                // ubyte cona[52];
+                int two;
+                uint hash1;
+                Vector3 pos;
+                Quaternion rot;
+                uint hash2;
+                int num;
+                int zero;
+                uint my_hash <bgcolor=0xFFF0FF, fgcolor=0xA030A0>;
+                break;
+            case 5:
+                ubyte cona[88]; break;
+            case 6:
+                //ubyte cona[48]; break;
+                int zero1, zero2;
+                uint hash1;
+                Vector3 v1, v2;
+                int num;
+                int zero;
+                uint my_hash <bgcolor=0xFFF0FF, fgcolor=0xA030A0>;
+                break;
+            case 7:
+                ubyte cona[144]; break;
+            case 8:
+                ubyte cona[144]; break;
+            case 9:
+                ubyte cona[132]; break;
+            case 10:
+                ubyte cona[28]; break;
+            case 11:
+                // TODO - dynamic
+                break;
+            case 12:
+                ubyte cona[20]; break;
+            case 13:
+                ubyte cona[40]; break;
+        }
+        xname = Str("Type %i", type);
+    } else if (chunkId == "MARE") {
+        // Material Resources (?)
+        int count;
+        struct {
+	        uint mat_hash; // hash of material file?
+	        uint num;
+	        uint diffuse_map; // Hash1
+	        uint normal_map; // Hash2
+	        uint specular_map; // Hash3
+	        uint alpha_map; // Hash4 / decal_opaque_map
+	        uint self_illum_map; // hash5
+	        float fAmbientContribution;
+	        Color4 ambient_color;
+	        float fPrelightingColourise;
+            uint tex_anim_hash;
+            int blend_mode;
+	        uint env_map; // hash6
+	        float fSelfIlluminationContribution;
+	        Color4 self_illum_color;
+	        float fSelfIlluminationColourise;
+            int eSpecialFXMode;
+	        Color4 xWaterReflectionColour, xWaterRefractionColour, xWaterFogColour;
+	        float fWaterFogStrength;
+	        Vector3 afWaterUVControls1, afWaterUVControls2;
+            float fWaterRippleScale, fWaterDistortionScale;
+            float j;
+	        Vector3 fWaterWaveControls1, fWaterWaveControls2;
+	        uint surface_type_hash;
+	        uint reflectivity_mask; // Hash7
+	        float reflectivity;
+	        uint parallax_map; // Hash8
+	        float fParallaxScale;
+	        uint detail_map; // Hash9
+	        uint detail_normal_map; // Hash10
+	        float fAlbedoDetailMapUVScale, fAlbedoDetailMapValueScale;
+            float fNormalDetailMapUVScale, fNormalDetailMapValueScale;
+
+            int uProjectContext, uChunkedFlags, uRenderType;
+            float fDiffuseGraphScale, fSpecularGraphScale;
+            uint uPartialShaderHash;
+            float r;
+            Vector3 s;
+            Vector3 t;
+            Vector3 u;
+        } materials[count] <read=Str(""), optimize=false>;
+        xname = Str("count = %i", count);
+    } else if (chunkId == "SMSG") {
+        // System Message?
+        // describes message_id that can be found is some entities, like triggers, etc.
+        // --> https://github.com/Trololp/AVP2010MapViewer/blob/main/docs/SMSG.txt
+        int count;
+        int upper; // if 1, then msgid += 30000
+        Assert(major == 7 && (upper == 0 || upper == 1));
+        struct {
+            byte b;
+            if (b) {
+	            int unk1;
+	            int msg_type;
+	            int unk2;
+	            int num_children;
+                struct {
+	                short w1; // type
+	                short w2; // data count [bytes]
+	                int seq_id; // entity id that will be called
+	                float f1;
+	                float f2; // delay
+                    if (msg_type >= 6) int type6_unk;
+				    switch (w1) {
+				        case 0x7B:
+					        ubyte mem_data[84];
+					        break;
+				        case 0x7C:
+				        case 0x7D:
+				        case 0x7E:
+				        case 0x7F:
+					        ubyte mem_data[40]; // 32 + 8 unk
+					        break;
+				        case 0x80:
+					        ubyte mem_data[80];
+					        break;
+				        default:
+					        local short w3 = (w2 + 3) & 0xFFFFFFFC;
+					        if (w3) {
+    					        ubyte mem_data[w3];
+					        }
+					        break;
+				    }
+                } children[num_children] <read=Str("%i  %i  %i     %f  %f", this.w1, this.w2, this.seq_id, this.f1, this.f2), optimize=false>;
+            }
+        } msgs[count] <read=Str("%i  %i  %i  %i  with %i children", this.b, this.unk1, this.msg_type, this.unk2, this.num_children), optimize=false>;
+        xname = Str("count = %i", count);
+    } else if (chunkId == "ENTI") {
+        // Entity
+        // --> https://github.com/Trololp/AVP2010MapViewer/blob/main/docs/ENTI.txt
+        //Assert(0);
+        uint id; // this is unique id for entities, every entity have it. it have non-linear behavior.
+        int enc_type; // this is entity id. In this game every entity splits into 2 groups. first is entities came from Asura engine, second is specific objects for this game. but its only my assumption.
+        // First group have normal entity_id. For second group ent_id is > 0x8000, to get normal id substract 0x7FA5. There only 178 max number of entity id. 
+        local ENTITY_TYPE type = enc_type > 0x8000 ? enc_type - 0x7FA5 : enc_type;
+        local ENTITY_CATEGORY cat = entity_categories[type];
+        switch (type) {
+	        case ENTITY_TIME_TRIGGER:
+                ubyte unk1[20];
+                int num;
+                int unk2[num];
+                int unk2b, unk2c;
+                ushort msgids[5];
+                ubyte unk3[6];
+                float f1, f2;
+                int flags;
+                break;
+	        case ENTITY_FX_DYNAMIC_LIGHT:
+                ubyte unk1[28];
+                int flags;
+                Vector3 pos;
+                Quaternion rot;
+                ubyte unk2[300];
+                AString4 s1, s2, s3;
+                break;
+            case ENTITY_LIGHT_OBJ_WITH_MODEL:
+                ubyte unk1[24]; // mostly the same
+                int num;
+                int ints[num];
+                uint cona_type3;
+                Vector3 pos;
+                Quaternion rot;
+                int num2;
+                uint conas[num2];                
+                int zero1, zero2;
+                int one1;
+                int zero3;
+                break;
+	        case ENTITY_ALIEN:
+	        case ENTITY_FACEHUGGER:
+	        case ENTITY_ALIEN_QUEEN:
+            case ENTITY_PREDATOR:
+                ubyte unk1[24];
+                uint hash;
+                int unk2b, unk2c;
+                BE_Messages messages;
+                Vector3 pos;
+                Vector4 rot;
+                byte unk3[25];
+                Vector2 hp;
+                switch (type) {
+	                case ENTITY_ALIEN:
+                        byte unk4[116]; break;
+	                case ENTITY_FACEHUGGER:
+                        byte unk4[104]; break;
+	                case ENTITY_PREDATOR:
+                        byte unk4[112]; break;
+                }
+                uint seq_ids[2];
+                break;
+            case ENTITY_PROP:
+                ubyte unk1[60];
+                uint be_flags; // 0x1 == enabled
+                BE_Messages messages;
+                Vector3 pos;
+                Vector4 rot;
+                byte unk2[33];
+                int special;
+                int unk2;
+                uint model_hash;
+                byte unk3[28];
+                uint group_id_or_flags;
+                break;
+        }
+        xname = Str("# %i  -  %s   (%i, %s)", id, EnumToString(type), type, EnumToString(cat));
+    } else {
+        // e.g.
+        // FNFO (File Info)
+        // MTRL
+        // LBAB
+        // CRNA
+        // MLINE
+        // VISI
+        // TXFL
+        // REND
+        // SKYS
+        // WTHR
+        // FOG
+        // RVBV
+        // mhdr (Map Header, for multiplayer maps)
+        // FACE
+        // FAAN (Facial Animation?)
+        // UIAN (UI Animation)
+        // UITP (UI-related)
+        // UIMP (UI definition?)
+        // --- From Common ---
+        // BLUE (Blueprint) --> https://github.com/Trololp/AVP2010MapViewer/blob/main/docs/BLUE.txt
+        // CONA
+        // IKTM (Inverse Kinematics ...)
+        // SDGS
+        // SDMX (Sound Mixing related)
+        // ADSP
+        // DYMC (Dynamic Music...?)
+        byte data[chunkSize - 16];
+    }
+    FSeek(chunkStart + chunkSize);
+} ChunkType <read=Str("%s   %i.%i   %i b", this.chunkId, this.major, this.minor, this.chunkSize),
+            comment=Str("%s", this.xname)>;
+
+
+char magic[8]; Assert(magic == "Asura   ");
+
+while (!FEof()) {
+    ChunkType chunk;
+}
