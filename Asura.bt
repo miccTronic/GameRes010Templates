@@ -141,190 +141,6 @@ enum ENTITY_TYPE {
 };
 
 
-local ENTITY_CATEGORY entity_categories[180];
-entity_categories[0] = ENTCAT_UNKNOWN;
-entity_categories[1] = ENTCAT_GLOBAL;
-entity_categories[2] = ENTCAT_UNKNOWN;
-entity_categories[3] = ENTCAT_GLOBAL;
-entity_categories[4] = ENTCAT_UNKNOWN;
-entity_categories[5] = ENTCAT_UNKNOWN;
-entity_categories[6] = ENTCAT_UNKNOWN;
-entity_categories[7] = ENTITY_POINT;
-entity_categories[8] = ENTCAT_UNKNOWN;
-entity_categories[9] = ENTCAT_UNKNOWN;
-entity_categories[10] = ENTCAT_UNKNOWN;
-entity_categories[11] = ENTCAT_GLOBAL;
-entity_categories[12] = ENTCAT_UNKNOWN;
-entity_categories[13] = ENTCAT_UNKNOWN;
-entity_categories[14] = ENTITY_POINT;
-entity_categories[15] = ENTCAT_UNKNOWN;
-entity_categories[16] = ENTCAT_UNKNOWN;
-entity_categories[17] = ENTCAT_UNKNOWN;
-entity_categories[18] = ENTCAT_UNKNOWN;
-entity_categories[19] = ENTCAT_UNKNOWN;
-entity_categories[20] = ENTITY_POINT;
-entity_categories[21] = ENTITY_POINT;
-entity_categories[22] = ENTCAT_UNKNOWN;
-entity_categories[23] = ENTCAT_UNKNOWN;
-entity_categories[24] = ENTCAT_UNKNOWN;
-entity_categories[25] = ENTCAT_UNKNOWN;
-entity_categories[26] = ENTCAT_UNKNOWN;
-entity_categories[27] = ENTCAT_UNKNOWN;
-entity_categories[28] = ENTCAT_UNKNOWN;
-entity_categories[29] = ENTCAT_UNKNOWN;
-entity_categories[30] = ENTCAT_UNKNOWN;
-entity_categories[31] = ENTCAT_UNKNOWN;
-entity_categories[32] = ENTCAT_GLOBAL;
-entity_categories[33] = ENTITY_POINT;
-entity_categories[34] = ENTCAT_GLOBAL;
-entity_categories[35] = ENTITY_POINT;
-entity_categories[36] = ENTCAT_UNKNOWN;
-entity_categories[37] = ENTCAT_UNKNOWN;
-entity_categories[38] = ENTCAT_UNKNOWN;
-entity_categories[39] = ENTCAT_UNKNOWN;
-entity_categories[40] = ENTCAT_UNKNOWN;
-entity_categories[41] = ENTCAT_UNKNOWN;
-entity_categories[42] = ENTCAT_GLOBAL;
-entity_categories[43] = ENTCAT_UNKNOWN;
-entity_categories[44] = ENTCAT_UNKNOWN;
-entity_categories[45] = ENTCAT_UNKNOWN;
-entity_categories[46] = ENTCAT_UNKNOWN;
-entity_categories[47] = ENTCAT_UNKNOWN;
-entity_categories[48] = ENTCAT_UNKNOWN;
-entity_categories[49] = ENTCAT_UNKNOWN;
-entity_categories[50] = ENTCAT_UNKNOWN;
-entity_categories[51] = ENTCAT_UNKNOWN;
-entity_categories[52] = ENTCAT_UNKNOWN;
-entity_categories[53] = ENTCAT_UNKNOWN;
-entity_categories[54] = ENTCAT_UNKNOWN;
-entity_categories[55] = ENTCAT_UNKNOWN;
-entity_categories[56] = ENTCAT_UNKNOWN;
-entity_categories[57] = ENTCAT_UNKNOWN;
-entity_categories[58] = ENTCAT_UNKNOWN;
-entity_categories[59] = ENTCAT_UNKNOWN;
-entity_categories[60] = ENTCAT_UNKNOWN;
-entity_categories[61] = ENTCAT_UNKNOWN;
-entity_categories[62] = ENTCAT_UNKNOWN;
-entity_categories[63] = ENTITY_POINT;
-entity_categories[64] = ENTITY_POINT;
-entity_categories[65] = ENTCAT_UNKNOWN;
-entity_categories[66] = ENTCAT_UNKNOWN;
-entity_categories[67] = ENTCAT_UNKNOWN;
-entity_categories[68] = ENTCAT_GLOBAL;
-entity_categories[69] = ENTITY_POINT;
-entity_categories[70] = ENTITY_POINT;
-entity_categories[71] = ENTITY_POINT;
-entity_categories[72] = ENTITY_POINT;
-entity_categories[73] = ENTCAT_UNKNOWN;
-entity_categories[74] = ENTCAT_GLOBAL;
-entity_categories[75] = ENTITY_POINT;
-entity_categories[76] = ENTCAT_UNKNOWN;
-entity_categories[77] = ENTITY_POINT;
-entity_categories[78] = ENTITY_POINT;
-entity_categories[79] = ENTCAT_UNKNOWN;
-entity_categories[80] = ENTCAT_UNKNOWN;
-entity_categories[81] = ENTCAT_UNKNOWN;
-entity_categories[82] = ENTCAT_UNKNOWN;
-entity_categories[83] = ENTITY_POINT;
-entity_categories[84] = ENTCAT_UNKNOWN;
-entity_categories[85] = ENTCAT_GLOBAL;
-entity_categories[86] = ENTCAT_UNKNOWN;
-entity_categories[87] = ENTCAT_UNKNOWN;
-entity_categories[88] = ENTCAT_UNKNOWN;
-entity_categories[89] = ENTCAT_UNKNOWN;
-entity_categories[90] = ENTCAT_UNKNOWN;
-entity_categories[91] = ENTCAT_UNKNOWN;
-entity_categories[92] = ENTITY_POINT;
-entity_categories[93] = ENTCAT_UNKNOWN;
-entity_categories[94] = ENTITY_POINT;
-entity_categories[95] = ENTITY_POINT;
-entity_categories[96] = ENTCAT_UNKNOWN;
-entity_categories[97] = ENTITY_POINT;
-entity_categories[98] = ENTCAT_UNKNOWN;
-entity_categories[99] = ENTCAT_UNKNOWN;
-entity_categories[100] = ENTITY_POINT;
-entity_categories[101] = ENTCAT_UNKNOWN;
-entity_categories[102] = ENTCAT_UNKNOWN;
-entity_categories[103] = ENTCAT_UNKNOWN;
-entity_categories[104] = ENTCAT_UNKNOWN;
-entity_categories[105] = ENTCAT_UNKNOWN;
-entity_categories[106] = ENTCAT_UNKNOWN;
-entity_categories[107] = ENTCAT_UNKNOWN;
-entity_categories[108] = ENTCAT_UNKNOWN;
-entity_categories[109] = ENTCAT_UNKNOWN;
-entity_categories[110] = ENTCAT_UNKNOWN;
-entity_categories[111] = ENTCAT_UNKNOWN;
-entity_categories[112] = ENTCAT_UNKNOWN;
-entity_categories[113] = ENTCAT_UNKNOWN;
-entity_categories[114] = ENTITY_POINT;
-entity_categories[115] = ENTITY_POINT;
-entity_categories[116] = ENTCAT_UNKNOWN;
-entity_categories[117] = ENTCAT_UNKNOWN;
-entity_categories[118] = ENTCAT_UNKNOWN;
-entity_categories[119] = ENTCAT_UNKNOWN;
-entity_categories[120] = ENTCAT_UNKNOWN;
-entity_categories[121] = ENTCAT_UNKNOWN;
-entity_categories[122] = ENTITY_POINT;
-entity_categories[123] = ENTCAT_UNKNOWN;
-entity_categories[124] = ENTITY_POINT;
-entity_categories[125] = ENTCAT_UNKNOWN;
-entity_categories[126] = ENTITY_POINT;
-entity_categories[127] = ENTCAT_UNKNOWN;
-entity_categories[128] = ENTCAT_UNKNOWN;
-entity_categories[129] = ENTCAT_UNKNOWN;
-entity_categories[130] = ENTCAT_GLOBAL;
-entity_categories[131] = ENTCAT_UNKNOWN;
-entity_categories[132] = ENTITY_POINT;
-entity_categories[133] = ENTCAT_GLOBAL;
-entity_categories[134] = ENTCAT_UNKNOWN;
-entity_categories[135] = ENTITY_POINT;
-entity_categories[136] = ENTITY_POINT;
-entity_categories[137] = ENTCAT_UNKNOWN;
-entity_categories[138] = ENTITY_POINT;
-entity_categories[139] = ENTCAT_UNKNOWN;
-entity_categories[140] = ENTITY_POINT;
-entity_categories[141] = ENTITY_POINT;
-entity_categories[142] = ENTITY_POINT;
-entity_categories[143] = ENTCAT_UNKNOWN;
-entity_categories[144] = ENTITY_POINT;
-entity_categories[145] = ENTITY_POINT;
-entity_categories[146] = ENTITY_POINT;
-entity_categories[147] = ENTCAT_GLOBAL;
-entity_categories[148] = ENTITY_POINT;
-entity_categories[149] = ENTCAT_GLOBAL;
-entity_categories[150] = ENTCAT_UNKNOWN;
-entity_categories[151] = ENTITY_POINT;
-entity_categories[152] = ENTCAT_UNKNOWN;
-entity_categories[153] = ENTCAT_UNKNOWN;
-entity_categories[154] = ENTCAT_UNKNOWN;
-entity_categories[155] = ENTCAT_UNKNOWN;
-entity_categories[156] = ENTITY_POINT;
-entity_categories[157] = ENTITY_POINT;
-entity_categories[158] = ENTITY_POINT;
-entity_categories[159] = ENTCAT_UNKNOWN;
-entity_categories[160] = ENTCAT_UNKNOWN;
-entity_categories[161] = ENTCAT_UNKNOWN;
-entity_categories[162] = ENTITY_POINT;
-entity_categories[163] = ENTITY_POINT;
-entity_categories[164] = ENTCAT_UNKNOWN;
-entity_categories[165] = ENTITY_POINT;
-entity_categories[166] = ENTITY_POINT;
-entity_categories[167] = ENTITY_POINT;
-entity_categories[168] = ENTCAT_UNKNOWN;
-entity_categories[169] = ENTITY_POINT;
-entity_categories[170] = ENTITY_POINT;
-entity_categories[171] = ENTCAT_UNKNOWN;
-entity_categories[172] = ENTCAT_UNKNOWN;
-entity_categories[173] = ENTITY_POINT;
-entity_categories[174] = ENTCAT_UNKNOWN;
-entity_categories[175] = ENTCAT_UNKNOWN;
-entity_categories[176] = ENTITY_POINT;
-entity_categories[177] = ENTCAT_UNKNOWN;
-entity_categories[178] = ENTCAT_UNKNOWN;
-entity_categories[179] = ENTCAT_UNKNOWN;
-
-
-
 typedef struct {
     int count;
     uint messages[count];
@@ -703,7 +519,7 @@ typedef struct {
         } data <bgcolor=0xDDDDDD>;
         xname = Str("%s", data.name.content);
     } else if (chunkId == "DLLT") {
-        // Dialog related...
+        // Dialog Line Type
         struct {
             AString4 name1;
             AString4 name2;
@@ -720,11 +536,12 @@ typedef struct {
         // Dialog Line
         struct {
             AString4 string_id;
-            // One of the following is probably RSCF ref
-            // another maybe DLLT ref?
-            uint unk1, unk2, unk3;
-            uint unk4, unk5;
-            ubyte zero3;
+            uint speaker_hash; // speaker ID?
+            uint line_type_hash; // hash of line type ID
+            uint sound_file_hash; // hash of ASTS name (with extension and forward slashes)
+            uint faan_hash; // facial animation
+            int faan_param;
+            ubyte zero3; Assert(zero3 == 0);
             float length_maybe;
             WString32 text;
         } data <bgcolor=0xCCCCFF>;
@@ -732,11 +549,15 @@ typedef struct {
     } else if (chunkId == "HTXT") {
         // Text (often used for subtitles and cutscenes)
         int count;
-        int dummy1, dummy2;
+        int dummy1, size1;
         struct {
             uint id;
             WString32 text;
-        } data[count] <read=Str("%s", this.text.content), bgcolor=0xCCCCCC, optimize=false>;
+        } texts[count] <read=Str("%s", this.text.content), bgcolor=0xCCCCCC, optimize=false>;
+        int size2;
+        struct {
+            string sid;
+        } ids[count] <read=Str("%s", this.sid), bgcolor=0xCCCCCC, optimize=false>;
         xname = Str("count = %i", count);
     } else if (chunkId == "LTXT") {
         // Text
@@ -944,7 +765,6 @@ typedef struct {
         int enc_type; // this is entity id. In this game every entity splits into 2 groups. first is entities came from Asura engine, second is specific objects for this game. but its only my assumption.
         // First group have normal entity_id. For second group ent_id is > 0x8000, to get normal id substract 0x7FA5. There only 178 max number of entity id. 
         local ENTITY_TYPE type = enc_type > 0x8000 ? enc_type - 0x7FA5 : enc_type;
-        local ENTITY_CATEGORY cat = entity_categories[type];
         switch (type) {
 	        case ENTITY_TIME_TRIGGER:
                 ubyte unk1[20];
@@ -976,6 +796,24 @@ typedef struct {
                 int zero1, zero2;
                 int one1;
                 int zero3;
+                break;
+            case ENTITY_DIALOGUE_CONTROLLER:
+                ubyte unk1[20];
+                BE_Messages messages;
+                ubyte unk3[34];
+                int num_DLLNs;
+                struct {
+                    int unk1; Assert(unk1 == 2);
+                    uint dlln_hash;
+                    short h1, h2;
+                    byte b1, bool2, bool3; 
+                    float unk3;
+                } dlln_data[num_DLLNs] <optimize=false>;
+                int count;
+                struct {
+                    uint speaker_hash;
+                    int seq_id;
+                } dlg_data[count] <optimize=false>;
                 break;
 	        case ENTITY_ALIEN:
 	        case ENTITY_FACEHUGGER:
