@@ -1,0 +1,24 @@
+#include "..\!Shared.bt"
+
+int unk1; Assert(unk1 == 255);
+int image_count;
+int total_size;
+int unk2; Assert(unk2 == 20);
+int data_offset;
+
+local int oldpos <hidden=true>;
+struct {
+    int type; Assert(type == 2);
+    int width;
+    int height;
+    uint unk1; // often 0
+    int offset;
+    int index;
+    int size;
+    int dX; // hotspot x and y for cursors
+    int dY;
+    oldpos = FTell();
+    FSeek(data_offset + offset);
+    ubyte data[size] <bgcolor=cLtGray>;
+    FSeek(oldpos);
+} hdr[image_count] <read=Str("Image #%i   %i*%i  Type = %i   HS = (%i %i)", this.index, this.width, this.height, this.type, this.dX, this.dY), optimize=false>;

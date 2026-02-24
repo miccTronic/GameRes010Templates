@@ -1,0 +1,25 @@
+#include "..\!Shared.bt"
+
+char magic[2]; Assert(magic == "BM");
+int total_size;
+int zero1; Assert(zero1 == 0);
+int extra_offset;
+int const3; Assert(const3 == 40);
+int extra_length;
+int extra_count;
+int const6; Assert(const6 == 524289);
+int zero7; Assert(zero7 == 0);
+int unk8; // sometimes 0, sometimes corresponds to extra_size
+int unk9; // 2834 or 0
+int unk10; // 2834 or 0
+int num_colors; Assert(num_colors <= 256);
+int num_colors_2; Assert(num_colors == num_colors_2);
+
+RGBA palette[num_colors > 0 ? num_colors : 256];
+
+// What follows could be palette variations or animations
+local int extra_size = total_size - extra_offset;
+struct {
+    ubyte data[extra_length];
+    if (extra_length % 4 != 0) ubyte padding[4 - (extra_length % 4)];
+} extra[extra_count] <optimize=false>;
