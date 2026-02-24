@@ -365,7 +365,6 @@ FodyWeavers.xsd
 /AGDS_Nibiru_DATA.bt
 /AGDS_Nibiru_X.bt
 /AGDS_Spotshape.bt
-/Asura.bt
 /CDC_CDRM.bt
 /CDC_DRM.bt
 /CPAGE.bt
@@ -377,18 +376,6 @@ FodyWeavers.xsd
 /DXBC_alt.bt
 /DXBC_DX10.bt
 /DXIL.bt
-/LT5_Inst.bt
-/LT5_Inst_yeti.bt
-/LT5_MatLib.bt
-/LT5_MatLib_yeti.bt
-/LT5_Wld.bt
-/LT5_WldClnt.bt
-/LT5_WldClnt_yeti.bt
-/LT5_WldMsh.bt
-/LT5_WldMsh_yeti.bt
-/LT5_WldSrvr.bt
-/LT5_WldSrvr_yeti.bt
-/LT5_Wld_yeti.bt
 /ltdark_client00p.bt
 /ltdark_world00p.bt
 /ltjupex_world00p.bt
