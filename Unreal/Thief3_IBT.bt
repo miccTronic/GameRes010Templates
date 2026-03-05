@@ -1,0 +1,51 @@
+#include "..\!Shared.bt"
+
+short version; // version?
+int unk1;
+short unk2;
+int payload_offset;
+int payload_size;
+int unk5;
+int unk6;
+int num_files;
+int num_ints; // total number of ints for all files
+#ifdef DXIW
+uint unk7_DXIW;
+#endif
+uint64 unk8;
+uint64 unk9;
+
+local int oldpos <hidden=true>;
+local int rcdsize <hidden=true> = 308;
+local int hdrsize <hidden=true> = 48;
+#ifdef DXIW
+rcdsize = 304; hdrsize = 52;
+#endif
+local int ints_start = hdrsize + (rcdsize * num_files);
+
+struct {
+    #ifndef DXIW
+    uint unk0_T3;
+    #endif
+    int offset;
+    int size;
+    int padding_size;
+    int ints_offset; // Not sure what they are... checksums maybe?
+    int ints_count;
+    uint unk1;
+    uint64 unk2; // hash?
+    uint64 unk3;
+    ubyte unk4;
+    char name[263] <fgcolor=cDkRed>;
+    oldpos = FTell();
+    FSeek(offset);
+    ubyte payload[size] <bgcolor=0xEEEEEE>;
+    ubyte padding[padding_size] <bgcolor=cBlack, fgcolor=cWhite>;
+    FSeek(ints_start + (ints_offset * 4));
+    int ints[ints_count] <bgcolor=0xFFFFDD>;
+    FSeek(oldpos);
+} files[num_files] <
+    read=Str("%s", this.name),
+    comment=Str("Offset = %i, Length = %i   Unks = %i %i", this.offset, this.size, this.ints_offset, this.ints_count),
+    optimize=false
+>;

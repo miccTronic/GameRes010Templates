@@ -1,0 +1,332 @@
+#ifndef AUTOGEN
+#include "..\!Shared.bt"
+#endif
+
+typedef enum <uint> {
+	OFLAG_TRANSACTIONAL       = 0x00000001,
+	OFLAG_INSINGULARFUNC      = 0x00000002, // unused
+	OFLAG_PUBLIC              = 0x00000004,
+	OFLAG_FINAL               = 0x00000080, // Introduced at some point during UE2, as for UE1 a property can be considered private if <seealso cref="Public"/> is unset.
+	OFLAG_PEROBJECTLOCALIZED  = 0x00000100, // or OFLAG_AUTOMATED?
+	OFLAG_PROTECTED           = 0x00000800,	
+	OFLAG_TRANSIENT           = 0x00004000, // Introduced at some point during UE2 and displaced to HI-Flags with UE3
+	OFLAG_LOADFORCLIENT       = 0x00010000,
+	OFLAG_LOADFORSERVER       = 0x00020000,
+	OFLAG_LOADFOREDIT         = 0x00040000,
+	OFLAG_STANDALONE          = 0x00080000,
+	OFLAG_NOTFORCLIENT        = 0x00100000,
+	OFLAG_NOTFORSERVER        = 0x00200000,
+	OFLAG_NOTFOREDIT          = 0x00400000,
+	OFLAG_HASSTACK            = 0x02000000,
+	OFLAG_NATIVE              = 0x04000000,
+	OFLAG_MARKED              = 0x08000000 // unused
+} ObjectFlagsLo <edit=flags, format=hex>;
+
+typedef enum<uint> {
+	OFLAG2_Obsolete           = 0x00000020,
+	OFLAG2_Final              = 0x00000080, // 'Private', deprecated with UE3 64 bit flags, 0x80 may have a different meaning.
+	OFLAG2_PerObjectLocalized = 0x00000100, // or "Protected"?
+	OFLAG2_PropertiesObject   = 0x00000200,	
+	OFLAG2_ArchetypeObject    = 0x00000400,
+	OFLAG2_RemappedName       = 0x00000800 // obsolete
+} ObjectFlagsHi <edit=flags, format=hex>;
+
+#ifdef DEUSEX
+local int cDEUSEX <hidden=true> = 1;
+#else
+local int cDEUSEX <hidden=true> = 0;
+#endif
+#ifdef T3IW
+local int cT3IW <hidden=true> = 1;
+#else
+local int cT3IW <hidden=true> = 0;
+#endif
+#ifdef DXIW
+local int cDXIW <hidden=true> = 1;
+#else
+local int cDXIW <hidden=true> = 0;
+#endif
+#ifdef BIOSHOCK
+local int cBIOSHOCK <hidden=true> = 1;
+#else
+local int cBIOSHOCK <hidden=true> = 0;
+#endif
+
+local int ver;
+local int oldPos <hidden=true>;
+
+uint magic; Assert(magic == 0x9E2A83C1);
+
+//int pck_version; Assert(pck_version >= 0); // otherwise, needs special handling!
+short pck_ver; ver = pck_ver;
+
+// --- Core Structs, part 1 (after "ver")
+
+typedef struct {
+    local int pos = FTell();
+    local int value = 0;
+    local int isSigned = 0;
+    local int length = 0;
+    local int i;
+    local ubyte x;
+
+    for (i = 0; i < 5; i++) {
+        x = ReadUByte(pos + i);
+        length++;
+
+        if (i == 0) {
+            // First byte
+            // Bit: X0000000 = sign
+            if ((x & 0x80) != 0) isSigned = 1;
+            // Bits: 00XXXXXX
+            value |= (x & 0x3F);
+            // Bit: 0X000000 = continuation
+            if ((x & 0x40) == 0) break;
+        } else if (i == 4) {
+            // Definitely last byte (5th)
+            // Bits: 000XXXXX (upper 3 bits ignored)
+            value |= (x & 0x1F) << (6 + (3 * 7));
+        } else {
+            // Middle bytes, possibly also last
+            // Bits: 0XXXXXXX = payload
+            value |= (x & 0x7F) << (6 + ((i - 1) * 7));
+            // Bit: X0000000 = continuation
+            if ((x & 0x80) == 0) break;
+        }
+    }
+
+    if (isSigned) value *= -1;
+    ubyte data[length];
+} CInt <read=Str("%i", this.value)>;
+
+typedef struct {
+    if (ver < 64) {
+        // UE1 (package versions < 64, original Unreal engine) store the Name
+        // data type as a zero-terminated ASCII string.
+        string content;
+    } else {
+        // Packages with versions >=64 (UT engine) prepend the length of the
+        // string plus the trailing zero.
+	    ubyte length;
+        if (length > 0) {
+            char content[length];
+        } else {
+            local char content;
+        }
+    }
+} UString <read=Str("%s", this.content), fgcolor=cDkRed>;
+typedef struct {
+	CInt length;
+    if (length.value > 0) {
+        char content[length.value];
+    } else {
+        local char content;
+    }
+} UStringC <read=Str("%s", this.content), fgcolor=cDkRed>;
+
+
+
+
+
+short pck_licensee_version;
+if (ver >= 249) int hdr_size;
+if (ver >= 269) UString folder_name;
+int pck_flags;
+int name_count, name_offset;
+int export_count, export_offset;
+int import_count, import_offset;
+if (ver < 68) {
+    int heritage_count, heritage_offset;
+} else {
+    if (ver >= 415) int depends_offset;
+    
+    if (cT3IW) int unk_t3iw;
+    
+    if (ver >= 623) Assert(0);
+    if (ver >= 548) int thumbnails_offset;
+    
+    GUID pck_guid;
+    int pck_generation; Assert(pck_generation > 0);
+    struct {
+        int ExportCount;
+        int NameCount;
+        int NetObjectCount;
+    } generations[pck_generation];
+    
+    if (ver >= 245) int engine_version;
+    if (ver >= 277) int cooker_version;
+    if (ver >= 334) int compression_flags;
+}
+
+// --------------------------------------------------------------
+
+FSeek(name_offset);
+struct {
+    UString name;
+    uint flags_lo;
+    if (cBIOSHOCK || ver >= 195) uint flags_hi;
+} names[name_count] <read=Str("%s", this.name.content), bgcolor=0xE0F0FF, optimize=false>;
+
+// --- Core Structs, part 2 (after "names")
+
+// Index into "Names" array
+typedef struct {
+    CInt index;
+    if (cBIOSHOCK || ver >= 343) int number;
+    local string name = index.value >= 0 && index.value < name_count ? names[index.value].name.content : "";
+} UName <read=Str("#%i   %s", this.index.value, this.name)>;
+
+int GetIndex(int value)
+{
+    return value > 0 && (value - 1) < export_count
+        ? exports[value - 1].obj_name.index.value
+        : (value < 0 && (-value - 1) < import_count
+            ? imports[-value - 1].obj_name.index.value
+            : -1);
+}
+string GetIndexName(int value)
+{
+    local string name = value > 0 && (value - 1) < export_count
+        ? exports[value - 1].obj_name.name
+        : (value < 0 && (-value - 1) < import_count
+            ? imports[-value - 1].obj_name.name
+            : "");
+    return value != 0 ? Str("{#%i   %s}", value, name) : "NULL";
+}
+
+// Index into "imports" (< 0) or "exports" (> 0)
+typedef struct {
+    CInt index;
+} UIndex <read=Str("%s", GetIndexName(this.index.value))>;
+
+
+
+
+FSeek(import_offset);
+struct {
+    UName pck_name;
+    UName cls_name;
+    int outerIndex;
+    UName obj_name;
+} imports[import_count] <read=Str("'%s' [%s] from '%s'", this.obj_name.name, this.cls_name.name, this.pck_name.name),
+    bgcolor=0xE0FFFF, optimize=false>;
+
+
+FSeek(export_offset);
+struct {
+    UIndex cls_index;
+    UIndex super_index;
+    int outerIndex;
+    if (cBIOSHOCK && ver >= 132) int bs_unk;
+    UName obj_name;
+    //Assert(obj_name.name != "AngularDrag");
+    if (ver >= 220) int archetype_index;
+    Assert(!cBIOSHOCK); // ObjectFlags?
+    ObjectFlagsLo flags_lo;
+    if ((flags_lo & OFLAG_PEROBJECTLOCALIZED)) {
+        // Not sure for which version, but observed for 69
+        int test;
+    }
+    if (cBIOSHOCK || ver >= 195) ObjectFlagsHi flags_hi;
+    CInt serial_size;
+    if (serial_size.value > 0 || ver >= 249) {
+        CInt serial_offset;
+    }
+    if (cBIOSHOCK && ver >= 130) int bs_unk2;
+    if (ver >= 178 && ver < 543) {
+        int component_count;
+        struct {
+            UName key;
+            int value;
+        } components[component_count];
+    }
+    if (ver >= 247) {
+        int export_flags;
+        GUID package_guid;
+        if (ver >= 475) uint export_pck_flags;
+    }
+    
+    #ifndef AUTOGEN
+    if (serial_size.value > 0) {
+        oldPos = FTell();
+        FSeek(serial_offset.value);
+        ubyte serialized[serial_size.value] <bgcolor=0xE0C0C0>;
+        FSeek(oldPos);
+    }
+    #endif
+} exports[export_count] <read=Str("'%s' [%s --> %s] (%i b)", this.obj_name.name, GetIndexName(this.cls_index.index.value), GetIndexName(this.super_index.index.value), this.serial_size.value),
+    bgcolor=0xE0FFE0, optimize=false>;
+
+// --- Core Structs, part 3 (after "imports" & "exports")
+enum<ubyte> UE1_PROPS {
+    UE1_NONE 				= 0,
+    UE1_BYTEPROPERTY		= 1,
+    UE1_INTPROPERTY			= 2,
+    UE1_BOOLPROPERTY		= 3,
+    UE1_FLOATPROPERTY		= 4,
+    UE1_OBJECTPROPERTY		= 5,	// OBJECT, COMPONENT, INTERFACE
+    UE1_NAMEPROPERTY		= 6,
+    UE1_STRINGPROPERTY		= 7,	// <= UE1, FIXED STRING. Or UE1_DELEGATEPROPERTY
+    UE1_CLASSPROPERTY		= 8,
+    UE1_ARRAYPROPERTY		= 9,	// >= UT, DYNAMIC ARRAY
+    UE1_STRUCTPROPERTY		= 10, 	// STRUCT, POINTER
+    UE1_STRPROPERTY			= 13,	// >= UT, DYNAMIC STRING
+    UE1_MAPPROPERTY			= 14,   // >= UT
+    UE1_FIXEDARRAYPROPERTY	= 15,	// >= UT, FIXED ARRAY, < UE3
+    UE1_POINTERPROPERTY     = 16,	// >= UE2.5 (UT2004), < UE3
+};
+enum<ubyte> UE1_SIZES {
+    UE1_1B = 0,
+    UE1_2B = 1,
+    UE1_4B = 2,
+    UE1_12B = 3,
+    UE1_16B = 4,
+    UE1_READ1B = 5,
+    UE1_READ2B = 6,
+    UE1_READ4B = 7,
+};
+
+typedef struct {
+    UName Name; // actually, we'd need to check for "None"
+    UE1_PROPS Type : 4; // UE1_PROPS
+    UE1_SIZES SizeClass : 3;
+    ubyte IsArrayOrBit : 1;
+    if (Type == UE1_STRUCTPROPERTY) {
+        UName StructType;
+    }
+    switch (SizeClass) {
+        case UE1_1B: local int size = 1; break;
+        case UE1_2B: local int size = 2; break;
+        case UE1_4B: local int size = 4; break;
+        case UE1_12B: local int size = 12; break;
+        case UE1_16B: local int size = 16; break;
+        case UE1_READ1B: ubyte size; break;
+        case UE1_READ2B: ushort size; break;
+        case UE1_READ4B: uint size; break;
+    }
+    if (Type != UE1_BOOLPROPERTY && IsArrayOrBit) {
+        ubyte b;
+        local int array_index;
+        if ((b & 0x80) == 0) array_index = b;
+        else if ((b & 0xC0) == 0x80) {
+            ubyte c;
+            array_index = ((b & 0x7F) << 8) + c;
+        } else {
+            ubyte c, d, e;
+            array_index = ((b & 0x3F) << 24) + (c << 16) + (d << 8) + e;
+        }       
+    }
+} UPropTag;
+
+typedef struct {
+    if (ver <= 61) Vector3 data;
+    else Vector4 data;
+} UBSphere;
+
+typedef struct {
+    BBox bbox;
+    ubyte is_valid;
+} UBBox;
+
+// strange... why do I have to specify the relative path here?!
+#include ".\Unreal\UE1_UObjects.bt"

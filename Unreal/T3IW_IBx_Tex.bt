@@ -1,0 +1,24 @@
+#include "..\!Shared.bt"
+
+byte version; Assert(version == 1);
+char fourcc[4];
+int mip_levels;
+int u3; // flags or pixelformat?
+int u4; // flags or pixelformat?
+int width;
+int height;
+int width2;
+int height2;
+int total_bytes;
+short h10;
+
+struct {
+    int level;
+    int width;
+    int height;
+    int bytes;
+    //int u15; // or padding?
+    //int u16; // or padding?
+    Align(32);
+    ubyte data[bytes] <bgcolor=0xFFDDFF>;
+} mips[mip_levels] <optimize=false>;

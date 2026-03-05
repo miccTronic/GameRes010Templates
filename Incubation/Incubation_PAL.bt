@@ -1,3 +1,6 @@
+// The .pal file is actually a standard Windows BitMap...
+// shame on me for overlooking this in the first place! ;-)
+
 #include "..\!Shared.bt"
 
 char magic[2]; Assert(magic == "BM");
@@ -17,7 +20,6 @@ int num_colors_2; Assert(num_colors == num_colors_2);
 
 RGBA palette[num_colors > 0 ? num_colors : 256];
 
-// What follows could be palette variations or animations
 local int extra_size = total_size - extra_offset;
 struct {
     ubyte data[extra_length];

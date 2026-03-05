@@ -1,0 +1,497 @@
+typedef struct {
+    UName name;
+    // --- ULevelBase ---
+    int count1; // dbNum
+    int count2; // dbMax
+    UIndex actors[count1] <optimize=false>;
+    UStringC protocol, host, map, portal;
+    CInt optcount;
+    UStringC options[optcount.value] <optimize=false>;
+    int port;
+    uint unk;
+    // --- ULevel ---
+    UIndex model;
+    if (ver < 98) {
+        CInt count3;
+        struct {
+            int distance;
+            UIndex startActor, endActor;
+            int collisionRadius, collisionHeight;
+            int reachFlags;
+            byte bPruned;
+        } level_reach_specs[count3.value] <optimize=false>;
+    }
+} ULevel;
+
+typedef struct {
+    int ver_one; Assert(ver_one == 1);
+    ubyte z1a; Assert(z1a == 0);
+    // --- ULevelBase ---
+    struct {
+        int unk1, unk2;
+        int num_actors_1;
+        int num_actors_2; Assert(num_actors_1 == num_actors_2);
+        UIndex actors[num_actors_1] <optimize=false>;
+        UStringC protocol, host, map, portal;
+        CInt optcount;
+        UStringC options[optcount.value] <optimize=false>;
+        int port;
+        uint unk;
+    } level_base;
+    // --- ULevel ---
+    UIndex model;
+    ubyte zeros1[30];
+    if (!cDXIW) ubyte zero1b;
+    // The following could be related to NavMeshes,
+    // which are defined as nodes and links
+    int num_ground_tris;
+    struct {        
+        int count; Assert(count == 3);
+        Vector3 v1, v2, v3;
+        Vector4 plane; // Not sure if used; almost always (0,0,1) planes
+        byte b; Assert(b == 0 || b == 2 || b == 8);
+    } ground_triangles[num_ground_tris] <read=Str("Verts = %i, b = %i", this.count, this.b), optimize=false>;
+    int num2;
+    struct {
+        ubyte flags_maybe;
+        Vector3 positions[2];
+        ubyte arr[4]; // could also be 8 bytes
+        uint unk2;
+    } data2[num2] <read=Str("b1 = %i, i2 = %i, Z = {%i %i %i %i}", this.flags_maybe, this.unk2, this.arr[0], this.arr[1], this.arr[2], this.arr[3]), optimize=false>;
+    struct {
+        int count;
+        int ints[count];
+    } data3[num_ground_tris] <optimize=false>;
+    int data4[num2 * 2];
+    int unsure1; Assert(unsure1 == 1);
+    int num3;
+    struct {
+        int i1, i2;
+        Vector3 vec;
+        int i3;
+        int c1; Assert(c1 == 64);
+        ubyte data[c1];
+    } data4[num3] <optimize=false>;
+    int num4;
+    struct {
+        Vector3 vec1, vec2;
+    } data5[num4] <optimize=false>;
+    // --- VBSP starts here ---
+    struct {
+        local uint start_offset <hidden=true> = FTell();
+        uint total_size;
+        uint magic_VBSP; Assert(magic_VBSP == 1347633750);
+        int count1, count2, count3, count4, count5_planes, count6, count7, count8, count9, count10;
+        Assert(count4 == 0);
+        Assert(count7 == 0);
+        uint unclear[11]; // could also be 1+1+2, or 4 bytes each
+        
+        // BSP Tree?
+        local int data6_max_i1, data6_max_i3;
+        struct {
+            // Points 2x into self and 1x into something unknown.
+            // 4-9 are zero.
+            int i1, i2_Data6, i3_Data6, i4, i5, i6, i7, i8, i9;
+            data6_max_i1 = Max(data6_max_i1, i1);
+            data6_max_i3 = Max(data6_max_i3, i3_Data6);
+        } data6[count2] <read=Str("%i %i %i     %i %i %i %i %i %i", this.i1, this.i2_Data6, this.i3_Data6, this.i4, this.i5, this.i6, this.i7, this.i8, this.i9), optimize=false>;
+        
+        local int data7_max_i1_i2, data7_max_i3_4, data7_max_i13;
+        struct {
+            // i1/i2 ---> data13
+            // i3/i4 ---> data9
+            // i13 --> data11 --> data7 (self)
+            int i1, i2, i3, i4, i5;
+            Assert(i5 == -1);
+            // This is in world coordinates, but not normal points...
+            Vector3 v1, v2;
+            int i12, i13;
+            Assert(i12 == 0);
+            data7_max_i1_i2 = Max(data7_max_i1_i2, Max(i1, i2));
+            data7_max_i3_4 = Max(data7_max_i3_4, Max(i3, i4));
+            data7_max_i13 = Max(data7_max_i13, i13);
+        } data7[count3] <read=Str("%i %i %i %i %i --> %i %i     (%f %f %f)", this.i1, this.i2, this.i3, this.i4, this.i5, this.i12, this.i13, this.v1.x, this.v1.y, this.v1.z), optimize=false>;
+        
+        Vector4 planes[count5_planes]; // was: data8
+        
+        local int data8_max_i1, data8_max_i2, data8_max_i3, data8_max_i4, data8_max_i5, data8_min_i5;
+        struct {
+            // i1/i2 --> data7
+            // i3/i4 --> data10?
+            // i5 --> planes
+            int i1, i2, i3, i4, i5_plane, i6;
+            Assert(i6 == 0);
+            data8_max_i1 = Max(data8_max_i1, i1);
+            data8_max_i2 = Max(data8_max_i2, i2);
+            data8_max_i3 = Max(data8_max_i3, i3);
+            data8_max_i4 = Max(data8_max_i4, i4);
+            data8_max_i5 = Max(data8_max_i5, i5_plane);
+            data8_min_i5 = Min(data8_min_i5, i5_plane);
+        } data9[count9] <read=Str("%i %i %i %i plane=%i", this.i1, this.i2, this.i3, this.i4, this.i5_plane), optimize=false>;
+        
+        Vector3 data10[count10];        
+        int zero1; Assert(zero1 == 0);
+        
+        int data11[count6]; // indices into data7?
+        
+        // Polygons or Surfaces
+        local int data12_sum_vec_a, data12_sum_vec_b, data12_sum_tris_a;
+        local int data12_sum_ind_a, data12_sum_ind_b, data12_sum_tris_b;
+        local int data12_sum_mats;
+        struct {
+            ubyte b1, b2, b3, b4;
+            Assert(b3 == 0 && b4 == 0);
+            local int idx_a_max = 0, idx_b_max = 0;
+            local int idx_a_min = 0, idx_b_min = 0;
+            if (b1 > 0 || b2 > 0) {
+                BBox bbox;
+                Vector4 bsphere; // first is radius?
+                int verts_a, idx_a, tris_a, num_mats, idx_b, tris_b, verts_b, i8, i9, i10;
+                Assert(i8 == 1);
+                Assert(i9 == -32);
+                Assert(i10 == 0);
+                data12_sum_vec_a += verts_a; data12_sum_vec_b += verts_b;
+                data12_sum_ind_a += idx_a; data12_sum_ind_b += idx_b;
+                data12_sum_tris_a += tris_a; data12_sum_tris_b += tris_b;
+                // Are they vertices and edges? Or faces?
+                // Or verts vs. indices?
+                struct {
+                    Vector3 vec1; // Position?
+                    uint i1;
+                    Vector2 vec2; // Texcoord?
+                    uint i2;
+                    uint i3;
+                } listA[verts_a] <optimize=false>;
+                struct {
+                    Vector3 vec;
+                    uint i;
+                } listB[verts_b] <optimize=false>;
+                
+                short indicesA[idx_a];
+                short indicesB[idx_b];
+                for (local int i=0; i<idx_a; i++) {
+                    idx_a_max = Max(idx_a_max, indicesA[i]);
+                    idx_a_min = Min(idx_a_min, indicesA[i]);
+                }
+                for (local int i=0; i<idx_b; i++) {
+                    idx_b_max = Max(idx_b_max, indicesB[i]);
+                    idx_b_min = Min(idx_b_min, indicesB[i]);
+                }
+                
+                struct {
+                    // Could be material assignments
+                    String8 s; // material?
+                    // The sum of num_p1 here is equal to i4 on the parent struct.
+                    // offsetX/countX may be vertex/index buffer offsets.
+                    uint num_p1, offset2, count2, offset3, count3, z6;
+                    Assert(z6 == 0);
+                } mats[num_mats] <read=Str("%i   Pos=[%i..%i]=%i   Idx=[%i..%i]=%i  -->  %s", this.num_p1, this.offset2, this.offset2+this.count2, this.count2, this.offset3, this.offset3+this.count3, this.count3, this.s.content), optimize=false>;
+            } else {
+                local int verts_a, idx_a, num_mats, idx_b, verts_b, tris_a, tris_b, i8, i9, i10 <hidden=true>;
+            }
+        } data12[count3] <read=Str("{%i %i %i %i}   Mats=%i    A: %i verts, %i-%i used, %i idx, %i tris   B: %i verts, %i-%i used, %i idx, %i tris}",
+            b1, b2, b3, b4, num_mats,
+            verts_a, idx_a_min, idx_a_max, idx_a, tris_a,
+            verts_b, idx_b_min, idx_b_max, idx_b, tris_b),
+            optimize=false>;
+        
+        struct {
+            short num;
+            struct D13 {
+                float floats[23];
+            } data13[num] <optimize=false>;
+            String32 s;
+            if (!cDXIW) int i1;
+        } data13[count8] <read=Str("%s", this.s.content), optimize=false>;
+        ubyte padding[total_size - (FTell() - start_offset)];        
+    } VBSP <bgcolor=0xFFFFEE>;
+    uint64 zero1;
+    float magic_or_float;
+    ubyte unsure1;
+    int num5;
+    struct {
+        // an int-int mapping.
+        // i1 points into count3 of the VBSP.
+        int i1, i2;
+        Assert(i2 <= 4);
+    } data14[num5] <read=Str("%i  %i", this.i1, this.i2), optimize=false>;
+    int d1, num6, num5_again, d4, d5, d6, d7, d8, d9;
+    Assert(num5 == num5_again);
+    string map_related_name;
+    Vector4 data15[num6] <optimize=false>;
+    //int data16[num6]; //<-- not sure how many to read...
+    // the following algorithm may also be wrong in some cases!
+    local uint data16_count = FTell();
+    struct {
+        do {
+            int num;
+        } while(num + 1 < num6);
+    } data16 <optimize=false>;
+    data16_count = (FTell() - data16_count) / 4;
+    // the last part could be compressed, but also garbage/padding...
+    int data17_size;
+    ubyte data17[data17_size];
+    byte next <bgcolor=0xCCCCFF>;
+} ULevel_T3DX;
+
+typedef struct {
+    //UName name;
+    //UBBox bbox;
+    //UBSphere bsphere;
+    if (ver <= 61) {
+        UIndex unk_null;
+        UIndex vectors, points, nodes, surfaces, verts;
+    } else {
+        //float bsphere_w;
+        //UIndex unk_null;
+        CInt num_vectors;
+        Vector3 vectors[num_vectors.value];
+        CInt num_points;
+        Vector3 points[num_points.value];
+        CInt num_nodes;
+        struct {
+			Vector4 plane;
+			uint64 ZoneMask;
+			ubyte NodeFlags;
+			CInt VertPool;
+			CInt Surf;
+			CInt Back;
+			CInt Front;
+			CInt pPlane;
+			CInt CollisionBound;
+			CInt RenderBound;
+			CInt Zone0;
+			CInt Zone1;
+			ubyte NumVertices;
+			int Leaf0;
+			int Leaf1;
+        } nodes[num_nodes.value] <optimize=false>;
+        CInt num_surfs;
+        struct {
+			UIndex Material;
+			int PolyFlags;
+			CInt pBase;
+			CInt vNormal;
+			CInt vTextureU;
+			CInt vTextureV;
+			CInt LightMap;
+			CInt BrushPoly;
+			short PanU;
+			short PanV;
+			UIndex BrushActor;
+        } surfaces[num_surfs.value] <optimize=false>;
+        CInt num_verts;
+        struct {
+			CInt vert;
+			CInt side;
+        } verts[num_verts.value] <optimize=false>;
+        int NumSharedSides;
+        int num_zones;
+        struct {
+			UIndex ZoneActor;
+			uint64 Connectivity;
+            uint64 Visibility;
+        } verts[num_zones] <optimize=false>;
+    }
+    UIndex polys;
+    CInt num_lightmaps;
+    struct {
+        int DataOffset;
+        float PanX;
+        float PanY;
+        float PanZ;
+        CInt UClamp;
+        CInt VClamp;
+        float UScale;
+        float VScale;
+        int LightActors;
+    } lightmaps[num_lightmaps.value] <optimize=false>;
+    CInt light_bits;
+    ubyte light_data[light_bits.value];
+    CInt num_bbs;
+    UBBox bbs[num_bbs.value];
+    CInt num_leaf_hulls;
+    int leaf_hulls[num_leaf_hulls.value];
+    CInt num_leaves;
+    struct {
+        CInt zone;
+        CInt Permeating;
+        CInt Volumetric;
+        uint64 VisibleZones;
+    } leaves[num_leaves.value] <optimize=false>;
+    CInt num_lights;
+    UIndex lights[num_lights.value] <optimize=false>;
+    int RootOutside;
+    int Linked;
+} UModel;
+
+typedef struct {
+    uint unk1, unk2;
+    UBBox bbox;
+    UBSphere bsphere;
+    // Just a guess - could also be something else!
+    CInt num_nodes;
+    struct {
+		Vector4 plane;
+        ubyte zeros[33];
+        // the following may also be bytes
+		CInt VertPool;
+		CInt Surf;
+		CInt Child0;
+		CInt Child1;
+		CInt Child3;
+		CInt CollisionBound;
+		CInt RenderBound;
+		//CInt Zone0;
+		//CInt Zone1;
+        Vector4 ExclusiveSphereBound; // maybe
+        ubyte zeros2[20];
+        CInt other; // or byte? NumVertices?
+		int64 ZoneMask;
+		int unk1; // iSection? iFirstVertex? iLightMap?
+		int vert_offset; // maybe?
+    } nodes[num_nodes.value] <optimize=false>;    
+    CInt num_1;
+    struct {
+        ubyte x1, x2, x3, x4;
+        Assert(x1 == 0 && x2 == 0 && x3 == 0);
+        ubyte b1, b2, b3, b4;
+        ubyte zeros[28];
+        ubyte ones[32];
+        ubyte zero2;  Assert(zero2 == 0);
+    } struct2[num_1.value] <optimize=false>;   
+    ubyte b3; Assert(b3 == 0); // probably CInt
+    ubyte b4; Assert(b4 == 0); // probably CInt
+    ubyte b5; Assert(b5 == 0); // probably CInt
+    int RootOutside;
+    int Linked;
+} UModel_T3DX;
+
+typedef struct {
+    uint zero1; Assert(zero1 == 0);
+    uint zero2; Assert(zero2 == 0);
+    String8 modelName;
+    int count;
+    UName names2[count] <optimize=false>;
+    Vector3 pos;
+    Vector3 rot;
+    ubyte b2;
+} UStaticMesh_T3DX;
+
+typedef struct {
+    uint zero1; Assert(zero1 == 0);
+    uint zero2; Assert(zero2 == 0);
+    UIndex target;
+    UIndex source;
+} ULinkDataObject_T3DX;
+
+typedef struct {
+    ushort id;
+    // 2 = bool
+    // 4 = string
+    // 8 = tag struct? (standard UE1 tag)
+    // 16 = float
+    // 128 = bool?
+    // 512 = byte?
+    // 16386 = UIndex?
+    ushort type; // Does this also encode the "category"???
+    int array_items; Assert(array_items > 0 && array_items < 1000);
+    struct {
+        int size;
+        ubyte data[size] <fgcolor=0x0080EE>;
+    } items[array_items] <optimize=false>;
+} T3DX_Property <read=Str("ID = %i, Type = %i, Items = %i", this.id, this.type, this.array_items)>;
+
+typedef struct {
+    local uint x <hidden=true>;
+    do {
+        x = ReadUInt();
+        if (x == 0) break;
+        T3DX_Property property;
+    } while(1);
+    uint zero1; Assert(zero1 == 0);
+} T3DX_Properties;
+
+typedef struct
+{
+    int num_links;
+    UIndex links[num_links] <fgcolor=0xAACC00, optimize=false>;
+} T3DX_Links;
+
+typedef struct {
+    int num_links;
+    UIndex links[num_links] <optimize=false>;
+    UIndex super_class;
+    ubyte b;
+    UIndex source_obj; // TextBuffer
+    ubyte b;
+    UName class_name;
+    int64 long1; 
+    if (long1 == 0 && cDXIW) {
+        int64 longZ1, longZ2, longZ3; Assert(longZ1 == 0 && longZ2 == 0 && longZ3 == 0);
+        short z4; Assert(z4 == 0);
+        short iw1;
+        int64 longZ5, longZ6; Assert(longZ5 == 0 && longZ6 == 0);
+        int z7; Assert(z7 == 0);
+        short iw2;
+    } else {
+        Assert(long1 == -1);
+        int z1, z2, z3;
+        int64 long2; short minus1;
+        Assert(z1 == 0 && z2 == 0 && z3 == 0);
+        Assert(long2 == -1);
+        Assert(minus1 == -1);
+        
+        int z4; Assert(z4 == 0);
+        ubyte b1; Assert(b1 == 50 || b1 == 58); // 58 seen only in DX
+        ubyte bReallyFlags; //Assert(b2 == 0 || b2 == 2 || b2 == 32 || b2 == 34);
+        int z5, z6, z7, z8; short z9;
+        Assert(z5 == 0 && z6 == 0 && z7 == 0 && z8 == 0 && z9 == 0);
+        ubyte bFlag1; Assert(bFlag1 == 2);
+        UIndex idx_self;
+        ubyte bFlag2; Assert(bFlag2 == 1);
+        short z10; ubyte z11;
+        Assert(z10 == 0 && z11 == 0);
+        ushort u5;
+        ushort u6;
+        UIndex super_class_b;
+        int one1; Assert(one1 == 1);
+        uint stuff2349234;
+        ubyte bFlag3;
+        Assert (bFlag3 == 3 || bFlag3 == 5 || bFlag3 == 4);
+        ubyte bFlag4;
+        #ifdef DXIW
+        Assert(bFlag4 == 7);
+        #else
+        Assert(bFlag4 == 3);
+        #endif
+        if (bFlag3 == 5) ushort extra_stuff;
+        if (bFlag3 == 4) UIndex extra_stuff;
+        //ubyte extra_stuff[bFlag3 - 3];
+        uint stuffXYZ;
+        #ifdef DXIW
+        Assert(stuffXYZ == 75826693);
+        #else
+        Assert(stuffXYZ == 75759874);
+        #endif
+        //ubyte count_maybe; //Assert(count_maybe == 3 || count_maybe == 5);
+        //ubyte stuff234rsa[count_maybe];
+        //ushort u7;
+    }
+    String8 friendly_name; // Class name as seen in editor, before cooking
+    ubyte z12;
+    if (z12 == 0) {
+        T3DX_Properties flesh_properties;
+    } else {
+        //Assert(0);
+        uint optional_stuff;
+        ubyte b234234;
+        //ubyte z13; Assert(z13 == 0);
+    }
+} UClass_T3DX;
+
+typedef struct {
+    T3DX_Properties flesh_properties;
+    T3DX_Links flesh_links;
+    uint zero2; Assert(zero2 == 0);
+} UActor_T3DX;
