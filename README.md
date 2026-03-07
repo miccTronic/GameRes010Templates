@@ -1,4 +1,4 @@
-# 010 Editor Templates for various games
+# micTronic's 010 Editor Templates for various games
 
 Games for which you will find at least _some_ data file parsing support:
 

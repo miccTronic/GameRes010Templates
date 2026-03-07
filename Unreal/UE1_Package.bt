@@ -1,3 +1,10 @@
+// Intended for UE1, might work with some UE2 games as well.
+// Credits for the engine format info go to:
+// https://github.com/EliotVU/Unreal-Library
+// https://github.com/dpjudas/SurrealEngine
+// NOTE: Most structs are currently NOT deserialized automatically.
+//       To decode ULevel etc. (see UE1_UObjects), you must manually add FSeek(...) and the struct you are interested in at the end.
+
 #ifndef AUTOGEN
 #include "..\!Shared.bt"
 #endif

@@ -1,0 +1,54 @@
+#include "..\!Shared.bt"
+#include "T3IW_Shared.bt"
+
+int version; Assert(version == 3);
+uint sig; Assert(sig == 64206);
+int count;
+
+typedef struct {
+    char content[64];
+} LString <read=Str("%s", content), fgcolor=cDkRed>;
+
+struct {
+    LString name <bgcolor=0x00EEEE>;
+    MapFlags maps_present; Assert(maps_present < 0x3FF);
+    Color3 color_amb, color_diff, color_spec;
+    float f1; // almost always 1
+    float diffuse_factor;
+    float env_factor; // aka. refl_amount
+    ubyte b_alpha_in_diffuse <edit=check>; Assert(b_alpha_in_diffuse == 0 || b_alpha_in_diffuse == 1);
+    ubyte b1b, b1c, b1d;
+    float env_alpha;
+    int z0; Assert(z0 == 0);
+    ubyte b2a;
+    ubyte b_emiss_ovr_skip <edit=check>;
+    ubyte b_diff_edge_alpha <edit=check>;
+    ubyte b2d;
+    uint z1; Assert(z1 == 0);
+    float f7_one; Assert(f7_one == 1.0);
+    ubyte b_diff1_rndr <edit=check>;
+    ubyte b3b, b3c, b3d;
+    int membrane <edit=check>; Assert(membrane == 0 || membrane == 1);
+    LString diffuse_map;
+    LString normal_map;
+    LString specular_map;
+    LString detail_map;
+    LString mask_map;
+    LString emissive_map;
+    LString env_map;
+    LString bump_map;
+    LString fx_map;
+    MaterialCategories category;
+    int blend_mode; Assert(blend_mode == 0 || blend_mode == 1); // 1 = additive
+    int b_alpha_test <edit=check>;
+    ubyte alpha_test_value; ubyte z2, z3, z4;
+    int zeros[12];
+    for (int i = 0; i < 12; i++) {
+        Assert(zeros[i] == 0);
+    }
+} materials[count] <
+    read=Str("%s      [%s]", name.content, EnumToString(category)),
+    comment=Str("%i %i %i | %i %i | %i %i %i | %s",
+        b1b, b1c, b1d, b2a, b2d, b3b, b3c, b3d,
+        EnumFlagsToString(maps_present)),
+    optimize=false>;

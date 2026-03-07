@@ -102,16 +102,20 @@ typedef struct
 typedef struct
 {
 	float r, g, b;
-} Color3 <read=Str("#%02X%02X%02X", (ubyte)(this.r * 255), (ubyte)(this.g * 255), (ubyte)(this.b * 255))>;
+} Color3 <read=Str("#%02X%02X%02X", (ubyte)(this.r * 255), (ubyte)(this.g * 255), (ubyte)(this.b * 255)), edit=color,
+    comment=Str("#%02X%02X%02X", (ubyte)(this.r * 255), (ubyte)(this.g * 255), (ubyte)(this.b * 255))>;
 typedef struct
 {
 	float r, g, b, a;
-} Color4 <read=Str("#%02X%02X%02X%02X", (ubyte)(this.r * 255), (ubyte)(this.g * 255), (ubyte)(this.b * 255), (ubyte)(this.a * 255))>;
+} Color4 <read=Str("#%02X%02X%02X%02X", (ubyte)(this.r * 255), (ubyte)(this.g * 255), (ubyte)(this.b * 255), (ubyte)(this.a * 255)), edit=color,
+    comment=Str("#%02X%02X%02X%02X", (ubyte)(this.r * 255), (ubyte)(this.g * 255), (ubyte)(this.b * 255), (ubyte)(this.a * 255))>;
 typedef struct
 {
 	ubyte r, g, b;
-} RGB <read=Str("#%02X%02X%02X", this.r, this.g, this.b)>;
+} RGB <read=Str("#%02X%02X%02X", this.r, this.g, this.b), edit=color,
+    comment=Str("#%02X%02X%02X", this.r, this.g, this.b)>;
 typedef struct
 {
 	ubyte r, g, b, a;
-} RGBA <read=Str("#%02X%02X%02X%02X", this.r, this.g, this.b, this.a)>;
+} RGBA <read=Str("#%02X%02X%02X%02X", this.r, this.g, this.b, this.a), edit=color,
+    comment=Str("#%02X%02X%02X%02X", this.r, this.g, this.b, this.a)>;

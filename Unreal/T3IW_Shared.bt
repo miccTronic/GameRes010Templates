@@ -1,0 +1,156 @@
+enum<int> MaterialCategories {
+#ifdef DXIW
+    CAT_UNASSIGNED,
+    CAT_CARDBOARD,
+    CAT_CARPET,
+    CAT_CERAMIC,
+    CAT_CONCRETE,
+    CAT_DIRT,
+    CAT_FLESH,
+    CAT_METAL_THICK,
+    CAT_RUBBER,
+    CAT_WOOD_THICK,
+    CAT_WOOD_FRAIL,
+    CAT_METAL_THIN,
+    CAT_MARBLE,
+    CAT_GLASS,
+    CAT_GRAVEL,
+    CAT_ICE,
+    CAT_SNOW,
+    CAT_GRASS,
+    CAT_DEPRECATED_DONOTUSE,
+    CAT_IGNORED
+#else
+    CAT_UNASSIGNED,
+    CAT_CARPET,
+    CAT_CERAMIC,
+    CAT_EARTH,
+    CAT_FLESH,
+    CAT_GLASS,
+    CAT_GRAVEL,
+    CAT_METAL,
+    CAT_MOSS,
+    CAT_PUDDLE,
+    CAT_STONE,
+    CAT_TILE,
+    CAT_VEGETATION,
+    CAT_WOOD,
+    CAT_STONECLIMB,
+    CAT_IGNORED,
+    CAT_OIL,
+    CAT_BLOOD,
+    CAT_SHALLOWWATER,
+    CAT_DEATHWATER
+#endif
+};
+
+typedef enum <uint> {
+    MAP_DIFF = 0x01, 
+    MAP_NORM = 0x02, 
+    MAP_SPEC = 0x04,
+    MAP_DETAIL = 0x08,
+    MAP_MASK = 0x10,
+    MAP_EMIS = 0x20,
+    MAP_ENV = 0x40,
+    MAP_8 = 0x80,
+    MAP_9 = 0x100,
+    MAP_10 = 0x200
+} MapFlags <edit=flags, format=hex>;
+
+enum<ubyte> RESTYPE {
+    RES_BITMAP,
+    RES_MATERIAL,
+    RES_MAP,
+    RES_MESH,
+    RES_STATICMESH,
+    RES_PHYSICSHULL,
+    RES_RAGDOLLS,
+    RES_CREATURE,
+    RES_TEXTURE,
+    RES_VIDEOTEXTURE,
+    RES_MATLIB,
+    RES_FONTINFO,
+    RES_SOUND,
+    RES_SOUNDSCHEMA,
+    RES_SONG,
+    RES_SOUNDSCHEMAMETAFILE,
+    RES_SKELETALMESH,
+    RES_SKELETALANIM,
+    RES_SKELETALANIMINFO,
+    RES_CONVERSATION,
+    RES_TEXT,
+    RES_TRIGGERSCRIPTDEF,
+    RES_STATICMESHINFO,
+    RES_STATICMESHFOLDER,
+    RES_SKELETALMESHINFO,
+    RES_STATICMESHINFOOLD,
+    RES_LIPSINCBONEPOSE,
+    RES_LIPSINCANIMATION,
+    RES_LIPSINCMAPPING,
+    RES_FLESHSHADER
+};
+
+typedef struct {
+    //ubyte b1, b2, b3, b4;
+    //Assert(b3 == 0 && b4 == 0);
+    local int idx_a_max = 0, idx_b_max = 0;
+    local int idx_a_min = 0, idx_b_min = 0;
+    BBox bbox;
+    Vector4 bsphere; // first is radius?
+    int verts_a, idx_a, tris_a, num_mats, idx_b, tris_b, verts_b, i8, i9, i10;
+    Assert(i8 == 1);
+    Assert(i9 == -32 || i9 == 64); // vertex fmt? -32 for level mesh, 64 for STM
+    Assert(i10 == 0);
+    if (i9 == -32) {
+        struct {
+            // Material vertices
+            Vector3 vec1; // Position?
+            uint bitfield1;
+            Vector2 vec2; // Texcoord?
+            uint bitfield2;
+            uint bitfield3;
+        } listA[verts_a] <optimize=false>;
+        struct {
+            // Non-material vertices
+            Vector3 vec;
+            uint i;
+        } listB[verts_b] <optimize=false>;
+    } else if (i9 == 64) {
+        struct {
+            Vector3 pos;
+            Vector3 norm;
+            Vector2 uv1;
+            Vector3 tan; // maybe
+            Vector2 uv2, uv3;
+            RGBA color;
+        } listA[verts_a] <optimize=false>;
+        struct {
+            Vector3 pos;
+            uint bitfield1;
+        } listB[verts_b] <optimize=false>;
+    } else {
+        Assert(0, "Unknown Vertex Format");
+    }
+    
+    short indicesA[idx_a];
+    short indicesB[idx_b];
+    for (local int i = 0; i<idx_a; i++) {
+        idx_a_max = Max(idx_a_max, indicesA[i]);
+        idx_a_min = Min(idx_a_min, indicesA[i]);
+    }
+    for (local int i=0; i<idx_b; i++) {
+        idx_b_max = Max(idx_b_max, indicesB[i]);
+        idx_b_min = Min(idx_b_min, indicesB[i]);
+    }
+
+    // Material Assignments    
+    struct {
+        String8 mat_name;
+        uint num_tris, offset2, count2, offset3, count3, z6;
+        //Assert(z6 == 0);
+    } mats[num_mats] <read=Str("Pos=[%i..%i]=%i   Idx=[%i..%i]=%i   Tris=%i  -->  %s", this.offset2, this.offset2+this.count2, this.count2, this.offset3, this.offset3+this.count3, this.count3, this.num_tris, this.mat_name.content), optimize=false>;
+} StaticMeshData <read=Str("Mats=%i    A: %i verts, %i-%i used, %i idx, %i tris   B: %i verts, %i-%i used, %i idx, %i tris",
+    num_mats,
+    verts_a, idx_a_min, idx_a_max, idx_a, tris_a,
+    verts_b, idx_b_min, idx_b_max, idx_b, tris_b)>;
+            

@@ -1,3 +1,6 @@
+// NOTE: This template is meant to be #included into UE1_Package.
+#include ".\Unreal\T3IW_Shared.bt"
+
 typedef struct {
     UName name;
     // --- ULevelBase ---
@@ -134,75 +137,27 @@ typedef struct {
         
         int data11[count6]; // indices into data7?
         
-        // Polygons or Surfaces
-        local int data12_sum_vec_a, data12_sum_vec_b, data12_sum_tris_a;
-        local int data12_sum_ind_a, data12_sum_ind_b, data12_sum_tris_b;
-        local int data12_sum_mats;
+        // Polygons, first variant
         struct {
-            ubyte b1, b2, b3, b4;
-            Assert(b3 == 0 && b4 == 0);
-            local int idx_a_max = 0, idx_b_max = 0;
-            local int idx_a_min = 0, idx_b_min = 0;
-            if (b1 > 0 || b2 > 0) {
-                BBox bbox;
-                Vector4 bsphere; // first is radius?
-                int verts_a, idx_a, tris_a, num_mats, idx_b, tris_b, verts_b, i8, i9, i10;
-                Assert(i8 == 1);
-                Assert(i9 == -32);
-                Assert(i10 == 0);
-                data12_sum_vec_a += verts_a; data12_sum_vec_b += verts_b;
-                data12_sum_ind_a += idx_a; data12_sum_ind_b += idx_b;
-                data12_sum_tris_a += tris_a; data12_sum_tris_b += tris_b;
-                // Are they vertices and edges? Or faces?
-                // Or verts vs. indices?
-                struct {
-                    Vector3 vec1; // Position?
-                    uint i1;
-                    Vector2 vec2; // Texcoord?
-                    uint i2;
-                    uint i3;
-                } listA[verts_a] <optimize=false>;
-                struct {
-                    Vector3 vec;
-                    uint i;
-                } listB[verts_b] <optimize=false>;
-                
-                short indicesA[idx_a];
-                short indicesB[idx_b];
-                for (local int i=0; i<idx_a; i++) {
-                    idx_a_max = Max(idx_a_max, indicesA[i]);
-                    idx_a_min = Min(idx_a_min, indicesA[i]);
-                }
-                for (local int i=0; i<idx_b; i++) {
-                    idx_b_max = Max(idx_b_max, indicesB[i]);
-                    idx_b_min = Min(idx_b_min, indicesB[i]);
-                }
-                
-                struct {
-                    // Could be material assignments
-                    String8 s; // material?
-                    // The sum of num_p1 here is equal to i4 on the parent struct.
-                    // offsetX/countX may be vertex/index buffer offsets.
-                    uint num_p1, offset2, count2, offset3, count3, z6;
-                    Assert(z6 == 0);
-                } mats[num_mats] <read=Str("%i   Pos=[%i..%i]=%i   Idx=[%i..%i]=%i  -->  %s", this.num_p1, this.offset2, this.offset2+this.count2, this.count2, this.offset3, this.offset3+this.count3, this.count3, this.s.content), optimize=false>;
-            } else {
-                local int verts_a, idx_a, num_mats, idx_b, verts_b, tris_a, tris_b, i8, i9, i10 <hidden=true>;
+            for (local int i=0; i < count3; i++) {
+                uint x;
+                if (x != 0) StaticMeshData stm;
             }
-        } data12[count3] <read=Str("{%i %i %i %i}   Mats=%i    A: %i verts, %i-%i used, %i idx, %i tris   B: %i verts, %i-%i used, %i idx, %i tris}",
-            b1, b2, b3, b4, num_mats,
-            verts_a, idx_a_min, idx_a_max, idx_a, tris_a,
-            verts_b, idx_b_min, idx_b_max, idx_b, tris_b),
-            optimize=false>;
+        } data12;
         
+        // Is this the same polys again... just as triangle fans?
         struct {
-            short num;
+            short num_verts;
             struct D13 {
-                float floats[23];
-            } data13[num] <optimize=false>;
-            String32 s;
-            if (!cDXIW) int i1;
-        } data13[count8] <read=Str("%s", this.s.content), optimize=false>;
+                Vector3 pos, norm;
+                Vector2 uv1;
+                float floats[9];
+                Assert(floats[0] == 0 && floats[8] == 0);
+                Vector2 uv2, uv3, uv4;
+            } verts[num_verts] <optimize=false>;
+            String32 mat_name;
+            if (!cDXIW) int t3_unk;
+        } data13[count8] <read=Str("mat_name   %i verts", s.content, num_verts), optimize=false>;
         ubyte padding[total_size - (FTell() - start_offset)];        
     } VBSP <bgcolor=0xFFFFEE>;
     uint64 zero1;
@@ -370,9 +325,9 @@ typedef struct {
 typedef struct {
     uint zero1; Assert(zero1 == 0);
     uint zero2; Assert(zero2 == 0);
-    String8 modelName;
-    int count;
-    UName names2[count] <optimize=false>;
+    String8 modelName; // links to .ibt/.ibd file
+    int num_mats;
+    UName materials[num_mats] <optimize=false>;
     Vector3 pos;
     Vector3 rot;
     ubyte b2;
@@ -387,13 +342,17 @@ typedef struct {
 
 typedef struct {
     ushort id;
-    // 2 = bool
+    // 1 = ???, e.g. var() inherited(1062) CustomEditor CustomViewer class<AIFactionModel> FactionModelClass;
+    // 2 = UObject???
     // 4 = string
     // 8 = tag struct? (standard UE1 tag)
     // 16 = float
-    // 128 = bool?
-    // 512 = byte?
-    // 16386 = UIndex?
+    // 32 = int
+    // 128 = bool
+    // 256 = UName
+    // 512 = Enum/byte
+    // 1024 = Array<UObject>
+    // bit 15 is OR'ed, but not clear what it means
     ushort type; // Does this also encode the "category"???
     int array_items; Assert(array_items > 0 && array_items < 1000);
     struct {

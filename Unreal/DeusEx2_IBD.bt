@@ -1,2 +1,4 @@
+// For use with Deus Ex 2: Invisible War .ibd map resource files.
+
 #define DXIW
 #include "Thief3_IBT.bt"

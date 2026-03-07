@@ -1,4 +1,89 @@
+// For use with Thief 3: Deadly Shadows .ibt "blockfiles".
+
 #include "..\!Shared.bt"
+#include "T3IW_Shared.bt"
+
+typedef struct {
+    byte unk_0; // almost always 0
+    int shader_type; // 0 = default, 1 = membrane
+    MapFlags flags;
+    Color4 color_amb;
+    Color4 color_diff;
+    Color4 color_spec;
+    float f14; Assert(f14 == 1.0);
+    float diffuse_factor;
+    float env_factor;
+    ubyte b_alpha_in_diffuse <edit=check>;
+    float env_alpha; // default = 0
+    uint z2; Assert(z2 == 0);
+    ubyte b_gm_rndr <edit=check>; // almost always 1
+    ubyte b_emiss_ovr_skip <edit=check>;
+    ubyte b_diff_edge_alpha <edit=check>;
+    uint z3; Assert(z3 == 0);
+    float f18; Assert(f18 == 1.0);
+    String32 mlb_file;
+    MaterialCategories category;
+    ubyte b_alpha_test <edit=check>; ubyte alpha_test_value;
+    ubyte unk_1, unk_2, unk_3;
+    String32 tex_diffuse, tex_normal, tex_specular, tex_detail, tex_mask,
+        tex_emissive, tex_env, tex_bump, tex_fx;
+} MatlibRes <comment=Str("%s", EnumFlagsToString(flags))>;
+
+typedef struct {
+    byte version; Assert(version == 1);
+    char fourcc[4];
+    int mip_levels;
+    int u3; // flags or pixelformat?
+    int u4; // flags or pixelformat?
+    int width;
+    int height;
+    int width2;
+    int height2;
+    int total_bytes;
+    short h10;
+    
+    local int num_slices = 1;
+    if (u3 == 6 && u4 == 5) num_slices = u3; // cubemap
+    
+    struct {
+        int level;
+        int width;
+        int height;
+        struct {
+            int bytes;
+            //int u15; // or padding?
+            //int u16; // or padding?
+            Align(32);
+            ubyte data[bytes] <bgcolor=0xFFDDFF>;
+        } slices[num_slices] <bgcolor=0xB0B0FF, optimize=false>;
+    } mips[mip_levels] <bgcolor=0xC0C0FF, optimize=false>;
+} TextureRes;
+
+typedef struct {
+    // Variants?
+    int num;    
+    struct {
+        String32 s;
+        int num_mats;
+        String32 materials[num_mats]<optimize=false>;
+    } mat_variants[num] <read=Str("%s", s.content), optimize=false>;
+    int num2; Assert(num2 == num);
+    uint mapping_data2_maybe[num2];
+    uint flags;
+    int num4;
+    struct {
+        Vector3 pos;
+        Vector3 m1, m2, m3; // 3x3 matrix?
+        String32 name;
+    } attachments[num4] <read=Str("%s", name.content), optimize=false>;
+    int smd_size;
+    StaticMeshData smd;
+} StaticMesh <read=Str("%i %i %i   %s", num, num2, num4, IntToBinaryStr(flags))>;
+
+
+
+
+
 
 short version; // version?
 int unk1;
@@ -7,7 +92,7 @@ int payload_offset;
 int payload_size;
 int unk5;
 int unk6;
-int num_files;
+int num_blocks;
 int num_ints; // total number of ints for all files
 #ifdef DXIW
 uint unk7_DXIW;
@@ -17,16 +102,14 @@ uint64 unk9;
 
 local int oldpos <hidden=true>;
 local int rcdsize <hidden=true> = 308;
-local int hdrsize <hidden=true> = 48;
 #ifdef DXIW
-rcdsize = 304; hdrsize = 52;
+rcdsize = 304;
+#else
+uint unk0_T3;
 #endif
-local int ints_start = hdrsize + (rcdsize * num_files);
+local int ints_start = 52 + (rcdsize * num_blocks);
 
-struct {
-    #ifndef DXIW
-    uint unk0_T3;
-    #endif
+typedef struct {
     int offset;
     int size;
     int padding_size;
@@ -35,17 +118,41 @@ struct {
     uint unk1;
     uint64 unk2; // hash?
     uint64 unk3;
-    ubyte unk4;
+    RESTYPE type;
     char name[263] <fgcolor=cDkRed>;
+#ifndef DXIW
+    uint load_filter;
+#endif
     oldpos = FTell();
-    FSeek(offset);
-    ubyte payload[size] <bgcolor=0xEEEEEE>;
-    ubyte padding[padding_size] <bgcolor=cBlack, fgcolor=cWhite>;
     FSeek(ints_start + (ints_offset * 4));
     int ints[ints_count] <bgcolor=0xFFFFDD>;
     FSeek(oldpos);
-} files[num_files] <
-    read=Str("%s", this.name),
+} Block <
+    read=Str("%s   '%s'          (%i b)", EnumToString(this.type), this.name, this.size),
     comment=Str("Offset = %i, Length = %i   Unks = %i %i", this.offset, this.size, this.ints_offset, this.ints_count),
     optimize=false
 >;
+
+for (local int i=0; i < num_blocks; i++) {
+    Block block;
+    oldpos = FTell();
+    FSeek(block.offset);
+    switch (block.type) {
+        case RES_TEXTURE:
+            TextureRes texture <bgcolor=0xA0A0FF>;
+            break;
+        case RES_MATLIB:
+            MatlibRes matlib <bgcolor=0xA0FFA0>;
+            break;
+        case RES_STATICMESH:
+            StaticMesh mesh <bgcolor=0xEEEEA0>;
+            break;
+        default:
+            struct {
+                ubyte payload[block.size];
+            } raw <bgcolor=0xEEEEEE>;
+            break;
+    }
+    //ubyte padding[padding_size] <bgcolor=cBlack, fgcolor=cWhite>;
+    FSeek(oldpos);
+}
