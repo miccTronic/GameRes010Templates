@@ -1,0 +1,6 @@
+// Thief 3 / DX2 .pro file format (cooked skeletal meshes)
+
+#include "..\!Shared.bt"
+#include "T3IW_Shared.bt"
+
+SkeletalMesh_Pro pro <bgcolor=0xF0F0F0>;

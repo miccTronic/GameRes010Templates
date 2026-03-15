@@ -345,13 +345,14 @@ typedef struct {
     // 1 = ???, e.g. var() inherited(1062) CustomEditor CustomViewer class<AIFactionModel> FactionModelClass;
     // 2 = UObject???
     // 4 = string
-    // 8 = tag struct? (standard UE1 tag)
+    // 8 = tag struct (standard UE1 tag)
     // 16 = float
     // 32 = int
     // 128 = bool
     // 256 = UName
     // 512 = Enum/byte
-    // 1024 = Array<UObject>
+    // 1024 = Array (but we don't know what the value type is)
+    // 2048 = Bitfield?
     // bit 15 is OR'ed, but not clear what it means
     ushort type; // Does this also encode the "category"???
     int array_items; Assert(array_items > 0 && array_items < 1000);
@@ -363,30 +364,36 @@ typedef struct {
 
 typedef struct {
     local uint x <hidden=true>;
+    local uint count <hidden=true>;
     do {
         x = ReadUInt();
         if (x == 0) break;
+        count++;
         T3DX_Property property;
     } while(1);
     uint zero1; Assert(zero1 == 0);
-} T3DX_Properties;
+} T3DX_Properties <read=Str("%i properties", count)>;
 
 typedef struct
 {
     int num_links;
     UIndex links[num_links] <fgcolor=0xAACC00, optimize=false>;
-} T3DX_Links;
+} T3DX_Links <read=Str("%i links", num_links)>;
 
 typedef struct {
-    int num_links;
-    UIndex links[num_links] <optimize=false>;
+    local uint cam_hack <hidden=true> = ReadUInt();
+    if (cam_hack != 240779286 && cam_hack != 223674388) {
+        // HACK for Camera class, which does not have the links
+        T3DX_Links flesh_links;
+    }
     UIndex super_class;
-    ubyte b;
-    UIndex source_obj; // TextBuffer
-    ubyte b;
-    UName class_name;
-    int64 long1; 
-    if (long1 == 0 && cDXIW) {
+    ubyte b0;
+    // -- UStruct? --
+    UIndex script_text; // TextBuffer
+    UIndex index_or_name; // unsure, could be "Children<UField>"
+    UName friendly_class_name;
+    int64 line_and_textpos_maybe;
+    if (line_and_textpos_maybe == 0 && cDXIW) {
         int64 longZ1, longZ2, longZ3; Assert(longZ1 == 0 && longZ2 == 0 && longZ3 == 0);
         short z4; Assert(z4 == 0);
         short iw1;
@@ -394,58 +401,132 @@ typedef struct {
         int z7; Assert(z7 == 0);
         short iw2;
     } else {
-        Assert(long1 == -1);
-        int z1, z2, z3;
+        Assert(line_and_textpos_maybe == -1);
+        int z1, z2, z3; // related to UStruct.ByteScriptSize...?
+         // are these the UState ProbeMask/RestoreMask fields?
         int64 long2; short minus1;
         Assert(z1 == 0 && z2 == 0 && z3 == 0);
         Assert(long2 == -1);
         Assert(minus1 == -1);
         
+        // -- UClass --   (starts somewhere around here, +/- 4b)
         int z4; Assert(z4 == 0);
-        ubyte b1; Assert(b1 == 50 || b1 == 58); // 58 seen only in DX
-        ubyte bReallyFlags; //Assert(b2 == 0 || b2 == 2 || b2 == 32 || b2 == 34);
-        int z5, z6, z7, z8; short z9;
-        Assert(z5 == 0 && z6 == 0 && z7 == 0 && z8 == 0 && z9 == 0);
-        ubyte bFlag1; Assert(bFlag1 == 2);
-        UIndex idx_self;
-        ubyte bFlag2; Assert(bFlag2 == 1);
-        short z10; ubyte z11;
-        Assert(z10 == 0 && z11 == 0);
-        ushort u5;
-        ushort u6;
-        UIndex super_class_b;
-        int one1; Assert(one1 == 1);
-        uint stuff2349234;
-        ubyte bFlag3;
-        Assert (bFlag3 == 3 || bFlag3 == 5 || bFlag3 == 4);
-        ubyte bFlag4;
-        #ifdef DXIW
-        Assert(bFlag4 == 7);
-        #else
-        Assert(bFlag4 == 3);
-        #endif
-        if (bFlag3 == 5) ushort extra_stuff;
-        if (bFlag3 == 4) UIndex extra_stuff;
-        //ubyte extra_stuff[bFlag3 - 3];
-        uint stuffXYZ;
-        #ifdef DXIW
-        Assert(stuffXYZ == 75826693);
-        #else
-        Assert(stuffXYZ == 75759874);
-        #endif
-        //ubyte count_maybe; //Assert(count_maybe == 3 || count_maybe == 5);
-        //ubyte stuff234rsa[count_maybe];
-        //ushort u7;
-    }
-    String8 friendly_name; // Class name as seen in editor, before cooking
-    ubyte z12;
-    if (z12 == 0) {
-        T3DX_Properties flesh_properties;
-    } else {
-        //Assert(0);
-        uint optional_stuff;
-        ubyte b234234;
-        //ubyte z13; Assert(z13 == 0);
+        // Class Flags?
+        ubyte bFlag1; //Assert(bFlag1 == 50 || bFlag1 == 82 || bFlag1 == 58); // flags?
+        ubyte bFlag2; //Assert(b2 == 0 || b2 == 2 || b2 == 32 || b2 == 34);
+        // ClassGUID? But set to 0
+        int z5, z6, z7, z8;
+        Assert(z5 == 0 && z6 == 0 && z7 == 0 && z8 == 0);
+        // ClassDependencies / PackageImportNames array?
+        short z9; Assert(z9 == 0);
+        ubyte bFlag3; Assert(bFlag3 == 1 || bFlag3 == 2);
+        if (bFlag3 == 2) {
+            UIndex idx_self;
+            ubyte bFlag4; Assert(bFlag4 == 1);
+            short z10; ubyte z11;
+            Assert(z10 == 0 && z11 == 0);
+            ushort u5;
+            ushort u6;
+            UIndex super_class_b;
+            int one1; Assert(one1 == 1);
+            uint u7;
+
+            // This is one hacky mess, not sure how it's properly decoded,
+            // but the number of combinations seems limited
+            local uint q <hidden=true>;
+            local uint qc <hidden=true> = 0;
+            while (true) {
+                q = ReadUInt();
+                if (q == 75759874 // 0x02 0x01 0x84 0x04
+                    || q == 109512463 // 0x0F 0x07 0x87 0x06
+                    || q == 92537858 // 0x02 0x04 0x84 0x05
+                    || q == 89752580 // 0x04 0x84 0x59 0x05
+                    || q == 109512453 // 05 07 87 06
+                    // -------- DX2 ---------
+                    || q == 75826693 // 05 06 85 04
+                    || q == 92865543 // 07 04 89 05
+                    || q == 92865539 // 03 04 89 05
+                    || q == 92537859 // 03 04 84 05
+                    || q == 72516612 // 04 84 52 04
+                ) {
+                    uint qz;
+                    break;
+                }
+                ubyte qb;
+                qc++;
+                if (qc > 6) Assert(0);
+            }
+            
+            /*
+            ubyte q1;
+            if (q1 == 2) {
+                ubyte q2; Assert(q2 == 2);
+                ubyte q3; Assert(q3 == 4);
+                ubyte q4; Assert(q4 == 0x84);
+                ubyte q5;
+                if (q5 == 0x59) {
+                    ubyte q6; Assert(q6 == 5);
+                } else if (q5 == 5) {
+                } else Assert(0);
+            } else if (q1 == 3) {
+                ubyte q2;
+                if (q2 == 3) {
+                    uint q; Assert(q == 75759874); // 0x02 0x01 0x84 0x04
+                } else if (q2 == 5) {
+                    uint q; Assert(q == 109512463); // 0x0F 0x07 0x87 0x06
+                } else Assert(0);
+            } else if (q1 == 4) {
+                ubyte q2; Assert(q2 == 3);
+                ubyte q3;
+                if (q3 == 11) {
+                } else if (q3 == 0x57) {
+                    ubyte q3b; Assert(q3b == 1);
+                } else if (q3 == 0x4E) {
+                    ubyte q3b; Assert(q3b == 0x15);
+                } else Assert(0);
+                uint q; Assert(q == 75759874); // 0x02 0x01 0x84 0x04
+            } else if (q1 == 5) {
+                ubyte q2; Assert(q2 == 3);
+                ubyte q3; Assert(q3 == 12);
+                ubyte q4; Assert(q4 == 11);
+                uint q; Assert(q == 75759874); // 0x02 0x01 0x84 0x04
+            } else Assert(0);
+            */
+            
+            /*
+            Assert (bFlag5 == 2 || bFlag5 == 3 || bFlag5 == 5 || bFlag5 == 4);
+            if (bFlag5 != 2) {
+                ubyte bFlag6;
+                #ifdef DXIW
+                Assert(bFlag6 == 7);
+                #else
+                Assert(bFlag6 == 3 || bFlag6 == 2 || bFlag6 == 6);
+                #endif
+                if (bFlag5 == 5) ushort extra_stuff;
+                if (bFlag5 == 4) UIndex extra_stuff;
+                uint u8;
+                #ifdef DXIW
+                Assert(u8 == 75826693);
+                #else
+                Assert(u8 == 75759874 || u8 == 126421256);
+                #endif
+            } else {
+                ubyte bx1, bx2, bx3; Assert(bx1 == 0x02 && bx2 == 0x04 && bx3 == 0x84);
+                ubyte bx4;
+                if (bx4 == 5) {
+                } else if (bx4 == 0x59) {
+                    ubyte bx5; Assert(bx5 == 5);
+                } else {
+                    Assert(0);
+                }
+            }
+            */
+            String8 friendly_name; // Class name as seen in editor, before cooking
+            UDefaultProperties properties;
+            //if (z12 == 0) {
+                T3DX_Properties flesh_properties;
+            //}
+        }
     }
 } UClass_T3DX;
 
@@ -454,3 +535,88 @@ typedef struct {
     T3DX_Links flesh_links;
     uint zero2; Assert(zero2 == 0);
 } UActor_T3DX;
+typedef struct {
+    T3DX_Properties flesh_properties;
+    uint zero2; Assert(zero2 == 0);
+} UActor_NoLinks_T3DX;
+
+
+typedef struct
+{
+    // Should start with 0 byte DefaultProperties dummy
+    // Then from UField: Super & NextField
+    uint z1; Assert(z1 == 0);
+    uint z2; Assert(z2 == 0);
+    ubyte z3; Assert(z3 == 0);
+    UIndex next_field;
+    int array_dim;
+    uint flags; // 64bits from >= v190
+    uint flesh_flags_1;
+    UName category_name;
+    ushort property_id <fgcolor=cLtGreen>;
+    ushort flesh_flags_2;
+    if (flags & 0x2000000) UStringC comment;
+    //UIndex enum_type; // for some byte and bitfield props... how to know?
+} UProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+} UBoolProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+    UIndex enum_type;
+} UByteProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+    UIndex enum_type;
+} UBitfieldProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+} UIntProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+} UFloatProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+    UIndex enum_type;
+} UEnumProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+} UStrProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+} UNameProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+    UIndex object_type;
+} UObjectProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+    UIndex struct_type;
+} UStructProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+    UIndex array_type;
+} UArrayProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+} UClassProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+} UMetaProperty_T3DX;
+typedef struct
+{
+    UProperty_T3DX base_prop;
+} UZoneProperty_T3DX;

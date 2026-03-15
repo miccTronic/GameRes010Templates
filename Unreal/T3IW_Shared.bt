@@ -153,4 +153,224 @@ typedef struct {
     num_mats,
     verts_a, idx_a_min, idx_a_max, idx_a, tris_a,
     verts_b, idx_b_min, idx_b_max, idx_b, tris_b)>;
+
+typedef CInt CCount <bgcolor=cAqua, fgcolor=cRed>;
+
+typedef struct {
+    local int i <hidden=true> = 0;
+    int ver; Assert(ver == 2 || ver == 7 || ver == 8);
+    ZeroInt32 z <hidden=true>;
+    BBox bbox;
+    ubyte bbox_isvalid; Assert(bbox_isvalid == 1);
+    Vector3 offset;
+    float f1;
+    ushort num_positions_repeat;
+    ZeroInt32 z <hidden=true>;
+    if (ver == 2) { ubyte b2; Assert(b2 == 1 || b2 == 2); }
+    Vector3 scale_maybe;
+    uint mostly_zero_ints[6];
+    
+    // Positions / "Skin Vertices"
+    CCount num_positions;
+    ushort POSDATA[num_positions.value] <optimize=false, bgcolor=0xFFEEEE>;
+    
+    local ushort max_posdata <name="......max"> = 0;
+    for (int i=0; i<num_positions.value; i++) {
+        max_posdata = Max(max_posdata, POSDATA[i]);
+    }
+
+
+    // Faces --> POSDATA
+    CCount num_faces_1; // but for LOD_0 only!
+    ushort FACEDATA_1[num_faces_1.value] <optimize=false, bgcolor=0xFFDDDD>;
+
+    local ushort facedata_1_max <name="......max"> = 0;
+    for (int i=0; i<num_faces_1.value; i++) {
+        facedata_1_max = Max(facedata_1_max, FACEDATA_1[i]);
+    }
+    
+    
+    // Faces --> VERTDATA (next 2 arrays)
+    CCount num_faces_2;
+    struct {
+        ushort w0, w1, w2;
+        ushort mat_ass_index; // Index into MAT_ASSIGNMENTS, *not* MATERIALS!
+    } FACEDATA_2[num_faces_2.value] <read=Str("(%i %i %i)    MatAssign = %i", w0, w1, w2, mat_ass_index), optimize=false, bgcolor=0xFFCCCC>;
+    Assert(num_faces_1.value == num_faces_2.value);
+
+    local ushort facedata_2_max <name="......max"> = 0;
+    for (int i=0; i<num_faces_2.value; i++) {
+        facedata_2_max = Max(facedata_2_max, FACEDATA_2[i].w0);
+        facedata_2_max = Max(facedata_2_max, FACEDATA_2[i].w1);
+        facedata_2_max = Max(facedata_2_max, FACEDATA_2[i].w2);
+    }
+
+    
+    // Vertices --> ???
+    CCount num_vertices_1;
+    ushort VERTDATA_1[num_vertices_1.value] <optimize=false, bgcolor=0xFFAAAA>;
+    
+    local ushort max_vertdata_1 <name="......max"> = 0;
+    for (int i=0; i<num_vertices_1.value; i++) {
+        max_vertdata_1 = Max(max_vertdata_1, VERTDATA_1[i]);
+    }
+
+
+    // Vertices --> Normals + UV
+    CCount num_vertices_2;
+    struct {
+        ushort vec_idx; // Also, normal & bone related index
+        float u, v;
+    } VERTDATA_2[num_vertices_2.value] <read=Str("Vec = %i   UV = (%f %f)", vec_idx, u, v), optimize=false, bgcolor=0xEEEEFF>;
+    Assert(num_vertices_1.value == num_vertices_2.value);
+    
+    local ushort max_vertdata_2 <name="......max"> = 0;
+    for (int i=0; i<num_vertices_2.value; i++) {
+        max_vertdata_2 = Max(max_vertdata_2, VERTDATA_2[i].vec_idx);
+    }
+
+
+    
+    CCount num_mats;
+    struct {
+        if (ver >= 7) char name[64];
+        uint flags1, flag2;
+    } MATS[num_mats.value] <optimize=false, bgcolor=0xCCCCFF>;
+    
+    float f1;
+    ZeroInt32 z1 <hidden=true>;
+    float strength <hidden=true>;
+    int min_verts <hidden=true>;  Assert(min_verts == 10);
+    float morph <hidden=true>;
+    ZeroInt32 z2 <hidden=true>;
+    
+    CCount num_vectors; // for non-LOD meshes, equal to # points?
+    Vector3 VECTORS[num_vectors.value] <optimize=false, bgcolor=0xAAAAFF>;
+    
+    CCount num_bones;
+    struct {
+        String8 name;
+        ZeroInt32 z0;
+        Quaternion rot;
+        Vector3 pos;
+        ZeroInt32 z1, z2, z3, z4;
+        int iFlags, iParent;
+    } BONES[num_bones.value] <read=Str("%s, Parent = %i, Flags = %i", name.content, iParent, iFlags), comment=Str("Pos = (%f %f %f)   Rot = (%f %f %f %f)", pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w), optimize=false, bgcolor=0xEEFFEE>;
+    
+    if (ver != 2) ZeroInt32 z3 <hidden=true>;
+    int flags; //Assert(flags == 3 || flags == 4 || flags == 5 || flags == 6 || flags == 8 || flags == 12 || flags == 13);
+    local string flags_str = IntToBinaryStr(flags);
+    
+    // Maps positions or verts to bones/weights (next array).
+    // Because the next array is flat, and verts may have different
+    // assignment counts, this map is sorted by assignment count.
+    // I.e. first come the verts with 1 weights, then with 2 weights etc.
+    // E.g. list index 2 means all verts that have 3 weights assigned.
+    // It's NOT clear what the value means yet... maybe the verts are not
+    // pre-sorted by assignment count, and we must do a reverse lookup?
+    // It COULD also be an index into the norm-tan list...
+    CCount num_bam;
+    i = 0;
+    struct {
+        local int index = i++;
+        CInt num;
+        ushort indices[num.value];
+        int offset; // into boneweights (next array)
+        local ushort max = 0;
+        for (local int i=0; i<num.value; i++) {
+            max = Max(max, indices[i]);
+        }
+    } BAMS[num_bam.value] <read=Str("num = %i   range = [%i..%i]   Max = %i", num.value, offset, offset+(num.value * (index+1)), max), optimize=false, bgcolor=0xDDFFDD>;
+    
+    local ushort totalcount_bam <name="......total-in"> = 0;
+    for (local int i=0; i<num_bam.value; i++) {
+        totalcount_bam += BAMS[i].num.value;
+    }
+    local ushort totalcount_bam_ind <name="......total-out"> = 0;
+    for (local int i=0; i<num_bam.value; i++) {
+        totalcount_bam_ind += (BAMS[i].num.value * (BAMS[i].index + 1));
+    }
+    local ushort max_bam <name="......max"> = 0;
+    for (local int i=0; i<num_bam.value; i++) {
+        max_bam = Max(max_bam, BAMS[i].max);
+    }    
+
+    // The "ÿÿXX" list... is this compressed bone weight/index data?
+    CCount num_boneweights;
+    struct {
+        ushort weight;
+        ushort bone_id;
+    } BONEWEIGHTS[num_boneweights.value] <read=Str("Bone = %i   Weight=%f", bone_id, (float)weight / (float)0xFFFF), optimize=false, bgcolor=0xCCFFCC>;
+    
+    local ushort max_boneweights <name="......max"> = 0;
+    for (local int i=0; i<num_boneweights.value; i++) {
+        max_boneweights = Max(max_boneweights, BONEWEIGHTS[i].bone_id);
+    }
+    
+    
+    ZeroInt8 z <hidden=true>, z <hidden=true>, z <hidden=true>;
+    
+    CCount num_mats_2;
+    //ZeroInt16 z4 <hidden=true>;
+    ushort h4;
+    
+    struct {
+        ZeroInt16 z;
+        ushort off1, count1;
+        ushort h3, h4, h5;
+        ushort off2, count2;
+        ushort mat_index;
+    } MAT_ASSIGNMENTS[num_mats_2.value] <read=Str("Mat %i: indices? = [%i..%i] = %i   faces = [%i..%i] = %i    %i %i %i", mat_index, off1, off1+count1, count1, off2, off2+count2, count2, h3, h4, h5), optimize=false, bgcolor=0xBBFFBB>;
+    Assert(num_mats.value == num_mats_2.value);
+    
+    if (ver >= 7) {
+        // Normal + Tangent?
+        // In any case, it seems to be one per LOD_0 vertex.
+        CCount num_normals;
+        Vector3 NORMALS[num_normals.value] <optimize=false, bgcolor=0x99FF99>;
+        CCount num_tangents;
+        Vector3 TANGENTS[num_tangents.value] <optimize=false, bgcolor=0x88FF88>;
+        
+        if (ver >= 8) {
+            ZeroInt8 z <hidden=true>;
+            int num_skins;
+            struct {
+                String8 skin_name;
+                int num_mats;
+                struct {
+                    String8 mat_name;
+                    int index;
+                } skin_mats[num_mats] <optimize=false, bgcolor=0xEEFFFF>;
+            } SKINS[num_skins] <optimize=false, bgcolor=0xCCFFFF>;
             
+            int num10;
+            ZeroInt32 z5 <hidden=true>;
+            int num_mats_3; Assert(num_mats_2.value == num_mats_3);
+            struct {
+                int a, b;
+            } MAT_DATA_2[num_mats_3] <read=Str("%i  %i", a, b), optimize=false>;
+    
+            local ushort total_matdata_2<name="......total"> = 0;
+            for (local int i=0; i<num_mats_3; i++) {
+                total_matdata_2 += MAT_DATA_2[i].a;
+            }
+            
+            
+            ZeroInt16 z6 <hidden=true>;
+            
+            if (!FEof()) {
+                // LOD 1+2 data
+                struct {
+                    ZeroInt16 z;
+                    ushort h;
+                    int num_mats;
+                    uint64 data12a[num_mats];
+                    struct {
+                        CInt num;
+                        ushort data[num.value];
+                    } data12b[2] <optimize=false>;
+                } PER_LOD_DATA[2] <read=Str("num = %i", data12b[0].num.value), optimize=false, bgcolor=0xFFFFEE>;
+            }
+        }
+    }
+} SkeletalMesh_Pro;

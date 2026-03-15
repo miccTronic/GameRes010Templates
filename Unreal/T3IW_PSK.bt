@@ -1,0 +1,88 @@
+#include "..\!Shared.bt"
+//#include "T3IW_Shared.bt"
+
+typedef struct {
+    char magic[8];
+    int unk1, unk2, unk3, unk4;
+    int size;
+    int count;
+} Header <read=Str("%s   Counts = %i   RcdSize = %i", magic, count, size),
+    bgcolor=cLtPurple>;
+
+Header ACTRHEAD;
+
+// Points/Positions
+Header PNTS0000;
+Vector3 verts[PNTS0000.count];
+
+// Vertices
+Header VTXW0000;
+struct {
+    int pos_idx;
+    float u, v;
+    ubyte b1, b2, b3, b4; // mat idx?
+} wedge[VTXW0000.count] <read=Str("Pos = %i   UV = (%f %f)    %i %i %i %i", pos_idx, u, v, b1, b2, b3, b4), optimize=false>;
+
+// Faces
+Header FACE0000;
+typedef struct {
+    ushort w1, w2, w3; // can also be ints if large number of wedges
+    ubyte mat1, mat2;
+    int smooth_group;
+} Face <read=Str("(%i %i %i)   Mat = (%i %i)   SG = %i", w1, w2, w3, mat1, mat2, smooth_group)>;
+Face faces[FACE0000.count] <optimize=false>;
+
+Header MATT0000;
+struct {
+    char name[64];
+    ubyte settings[24];
+} materials[MATT0000.count] <read=Str("%s", name), optimize=false>;
+
+Header REFSKELT;
+struct {
+    char name[64];
+    int ints[3];
+    float floats[7];    
+    ubyte settings[16];
+} bones[REFSKELT.count] <optimize=false>;
+
+Header RAWWEIGHTS;
+struct {
+    float weight;
+    int pt_idx;
+    int bone_idx;
+} weights[RAWWEIGHTS.count] <read=Str("Pt = %i, Weight = %f, Bone = %i", pt_idx, weight, bone_idx), optimize=false>;
+
+if (!FEof()) {
+
+Header VTXW0001;
+struct {
+    float anything[10];
+} wedges_2[VTXW0001.count] <optimize=false>;
+
+Header SKNS0000;
+struct {
+    char name[64];
+    int i1, i2;
+} skins[SKNS0000.count] <optimize=false>;
+
+Header SMAT0000;
+struct {
+    char name[64];
+    int i1, i2;
+} skin_mats[SMAT0000.count] <optimize=false>;
+
+typedef struct {
+    // Unsure!
+    ushort w1, w2, w3; // can also be ints if large number of wedges
+    ubyte mat1, mat2;
+    int smooth_group;
+} LodVerts;
+Header LODL0001;
+Face lod_verts_1[LODL0001.count] <optimize=false>;
+Header LODL0002;
+Face lod_verts_2[LODL0002.count] <optimize=false>;
+
+local int total_faces = FACE0000.count + LODL0001.count + LODL0002.count;
+
+}

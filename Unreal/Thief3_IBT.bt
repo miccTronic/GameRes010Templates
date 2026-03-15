@@ -33,14 +33,14 @@ typedef struct {
     byte version; Assert(version == 1);
     char fourcc[4];
     int mip_levels;
-    int u3; // flags or pixelformat?
-    int u4; // flags or pixelformat?
+    int u3; // flags or pixelformat? 6 for cube maps. bit 1 set for normal maps
+    int u4; // flags or pixelformat? often 3 for normal maps.
     int width;
     int height;
-    int width2;
-    int height2;
+    int width2; //Assert(width2 == width);
+    int height2; //Assert(height2 == height);
     int total_bytes;
-    short h10;
+    short z1; Assert(z1 == 0 || z1 == 1); // 1 seen for "MetaScreenGrab" special texture
     
     local int num_slices = 1;
     if (u3 == 6 && u4 == 5) num_slices = u3; // cubemap
@@ -57,28 +57,57 @@ typedef struct {
             ubyte data[bytes] <bgcolor=0xFFDDFF>;
         } slices[num_slices] <bgcolor=0xB0B0FF, optimize=false>;
     } mips[mip_levels] <bgcolor=0xC0C0FF, optimize=false>;
-} TextureRes;
+} TextureRes <comment=Str("%s   %i*%i   %i mips   %i   %i", fourcc, width, height, mip_levels, u3, u4)>;
 
 typedef struct {
-    // Variants?
-    int num;    
+    // Skins defined map actual materials to material slots
+    int num_skins;
     struct {
-        String32 s;
+        String32 name;
         int num_mats;
         String32 materials[num_mats]<optimize=false>;
-    } mat_variants[num] <read=Str("%s", s.content), optimize=false>;
-    int num2; Assert(num2 == num);
-    uint mapping_data2_maybe[num2];
+    } skins[num_skins] <read=Str("%s    (%i mats)", name.content, num_mats), optimize=false>;
+    int num2; Assert(num2 == num_skins);
+    uint mapping_data2_maybe[num2] <read=Str("%s", IntToBinaryStr(this))>;
     uint flags;
-    int num4;
+    // Attachments (or whatever "HP" stands for)
+    int num_attachments;
     struct {
         Vector3 pos;
-        Vector3 m1, m2, m3; // 3x3 matrix?
+        Vector3 m1, m2, m3; // 3x3 matrix
         String32 name;
-    } attachments[num4] <read=Str("%s", name.content), optimize=false>;
+    } attachments[num_attachments] <read=Str("%s", name.content), optimize=false>;
     int smd_size;
     StaticMeshData smd;
-} StaticMesh <read=Str("%i %i %i   %s", num, num2, num4, IntToBinaryStr(flags))>;
+} StaticMesh <comment=Str("Skins=%i Attach=%i   %s", num_skins, num_attachments, IntToBinaryStr(flags))>;
+
+typedef struct {
+    String32 name;
+    String32 source;
+    Vector3 origin, rotation_ypr, scale;
+    int has_lod;
+    int no_uvs;
+    int lod_style; // default == 10?
+    int sample_fmt; // default == 0?
+    int min_verts; // default == 10?
+    float strength, morph, hyteresis, z_displace;
+    int mesh_flags_maybe;
+    int num_lods; 
+    float lod_thresholds[num_lods]; // max. screen size in pixels
+    ZeroInt32 z[2] <optimize=false>;
+    int num2;
+    String32 names[num2] <optimize=false>;
+    int num3; Assert(num2 == num3);
+    ZeroInt32 z[num3 + 1] <optimize=false>;
+    int i9;
+    uint u10;
+    
+    SkeletalMesh_Pro pro;
+} SkeletalMesh <comment=Str("TODO")>;
+
+typedef struct {
+    int unk;
+} SkeletalMeshAnim <comment=Str("TODO")>;
 
 
 
@@ -129,9 +158,9 @@ typedef struct {
     FSeek(oldpos);
 } Block <
     read=Str("%s   '%s'          (%i b)", EnumToString(this.type), this.name, this.size),
-    comment=Str("Offset = %i, Length = %i   Unks = %i %i", this.offset, this.size, this.ints_offset, this.ints_count),
     optimize=false
 >;
+//    comment=Str("Offset = %i, Length = %i   Unks = %i %i", this.offset, this.size, this.ints_offset, this.ints_count),
 
 for (local int i=0; i < num_blocks; i++) {
     Block block;
@@ -146,6 +175,12 @@ for (local int i=0; i < num_blocks; i++) {
             break;
         case RES_STATICMESH:
             StaticMesh mesh <bgcolor=0xEEEEA0>;
+            break;
+        case RES_SKELETALMESH:
+            SkeletalMesh skm <bgcolor=0xFFA0A0>;;
+            break;
+        case RES_SKELETALANIM:
+            SkeletalMeshAnim anim <bgcolor=0xEED0B0>;;
             break;
         default:
             struct {

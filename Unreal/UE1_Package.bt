@@ -15,8 +15,13 @@ typedef enum <uint> {
 	OFLAG_PUBLIC              = 0x00000004,
 	OFLAG_FINAL               = 0x00000080, // Introduced at some point during UE2, as for UE1 a property can be considered private if <seealso cref="Public"/> is unset.
 	OFLAG_PEROBJECTLOCALIZED  = 0x00000100, // or OFLAG_AUTOMATED?
+    OFLAG_200                 = 0x00000200,
+    OFLAG_400                 = 0x00000400,
 	OFLAG_PROTECTED           = 0x00000800,	
+    OFLAG_1000                = 0x00001000,
+    OFLAG_2000                = 0x00002000,
 	OFLAG_TRANSIENT           = 0x00004000, // Introduced at some point during UE2 and displaced to HI-Flags with UE3
+    OFLAG_8000                = 0x00008000,
 	OFLAG_LOADFORCLIENT       = 0x00010000,
 	OFLAG_LOADFORSERVER       = 0x00020000,
 	OFLAG_LOADFOREDIT         = 0x00040000,
@@ -24,9 +29,15 @@ typedef enum <uint> {
 	OFLAG_NOTFORCLIENT        = 0x00100000,
 	OFLAG_NOTFORSERVER        = 0x00200000,
 	OFLAG_NOTFOREDIT          = 0x00400000,
+    OFLAG_800000              = 0x00800000,
+    OFLAG_1000000             = 0x01000000,
 	OFLAG_HASSTACK            = 0x02000000,
 	OFLAG_NATIVE              = 0x04000000,
-	OFLAG_MARKED              = 0x08000000 // unused
+	OFLAG_MARKED              = 0x08000000, // unused
+    OFLAG_10000000            = 0x10000000,
+    OFLAG_20000000            = 0x20000000,
+    OFLAG_30000000            = 0x40000000,
+    OFLAG_40000000            = 0x80000000,
 } ObjectFlagsLo <edit=flags, format=hex>;
 
 typedef enum<uint> {
@@ -68,43 +79,6 @@ uint magic; Assert(magic == 0x9E2A83C1);
 short pck_ver; ver = pck_ver;
 
 // --- Core Structs, part 1 (after "ver")
-
-typedef struct {
-    local int pos = FTell();
-    local int value = 0;
-    local int isSigned = 0;
-    local int length = 0;
-    local int i;
-    local ubyte x;
-
-    for (i = 0; i < 5; i++) {
-        x = ReadUByte(pos + i);
-        length++;
-
-        if (i == 0) {
-            // First byte
-            // Bit: X0000000 = sign
-            if ((x & 0x80) != 0) isSigned = 1;
-            // Bits: 00XXXXXX
-            value |= (x & 0x3F);
-            // Bit: 0X000000 = continuation
-            if ((x & 0x40) == 0) break;
-        } else if (i == 4) {
-            // Definitely last byte (5th)
-            // Bits: 000XXXXX (upper 3 bits ignored)
-            value |= (x & 0x1F) << (6 + (3 * 7));
-        } else {
-            // Middle bytes, possibly also last
-            // Bits: 0XXXXXXX = payload
-            value |= (x & 0x7F) << (6 + ((i - 1) * 7));
-            // Bit: X0000000 = continuation
-            if ((x & 0x80) == 0) break;
-        }
-    }
-
-    if (isSigned) value *= -1;
-    ubyte data[length];
-} CInt <read=Str("%i", this.value)>;
 
 typedef struct {
     if (ver < 64) {
@@ -295,35 +269,80 @@ enum<ubyte> UE1_SIZES {
 
 typedef struct {
     UName Name; // actually, we'd need to check for "None"
-    UE1_PROPS Type : 4; // UE1_PROPS
-    UE1_SIZES SizeClass : 3;
-    ubyte IsArrayOrBit : 1;
-    if (Type == UE1_STRUCTPROPERTY) {
-        UName StructType;
-    }
-    switch (SizeClass) {
-        case UE1_1B: local int size = 1; break;
-        case UE1_2B: local int size = 2; break;
-        case UE1_4B: local int size = 4; break;
-        case UE1_12B: local int size = 12; break;
-        case UE1_16B: local int size = 16; break;
-        case UE1_READ1B: ubyte size; break;
-        case UE1_READ2B: ushort size; break;
-        case UE1_READ4B: uint size; break;
-    }
-    if (Type != UE1_BOOLPROPERTY && IsArrayOrBit) {
-        ubyte b;
-        local int array_index;
-        if ((b & 0x80) == 0) array_index = b;
-        else if ((b & 0xC0) == 0x80) {
-            ubyte c;
-            array_index = ((b & 0x7F) << 8) + c;
-        } else {
-            ubyte c, d, e;
-            array_index = ((b & 0x3F) << 24) + (c << 16) + (d << 8) + e;
-        }       
+    if (Name.index.value != 0) {
+        UE1_PROPS Type : 4; // UE1_PROPS
+        UE1_SIZES SizeClass : 3;
+        ubyte IsArrayOrBit : 1;
+        if (Type == UE1_STRUCTPROPERTY) {
+            UName StructType;
+        }
+        switch (SizeClass) {
+            case UE1_1B: local int size = 1; break;
+            case UE1_2B: local int size = 2; break;
+            case UE1_4B: local int size = 4; break;
+            case UE1_12B: local int size = 12; break;
+            case UE1_16B: local int size = 16; break;
+            case UE1_READ1B: ubyte size; break;
+            case UE1_READ2B: ushort size; break;
+            case UE1_READ4B: uint size; break;
+        }
+        if (Type != UE1_BOOLPROPERTY && IsArrayOrBit) {
+            ubyte b;
+            local int array_index;
+            if ((b & 0x80) == 0) array_index = b;
+            else if ((b & 0xC0) == 0x80) {
+                ubyte c;
+                array_index = ((b & 0x7F) << 8) + c;
+            } else {
+                ubyte c, d, e;
+                array_index = ((b & 0x3F) << 24) + (c << 16) + (d << 8) + e;
+            }       
+        }
+    } else {
+        local UE1_PROPS Type = 0;
     }
 } UPropTag;
+
+typedef struct {
+    UPropTag tag;
+    local string valstr;
+    switch (tag.Type) {
+        case UE1_NONE:
+            break;
+        case UE1_BOOLPROPERTY:
+            if (tag.size > 0) {
+                ubyte value <edit=check>;
+                valstr = value ? " = true" : " = false";
+            }
+            break;
+        case UE1_BYTEPROPERTY:
+            ubyte value;
+            valstr = Str(" = %i", value);
+            break;
+        case UE1_INTPROPERTY:
+            int value;
+            valstr = Str(" = %i", value);
+            break;
+        case UE1_FLOATPROPERTY:
+            float value;
+            valstr = Str(" = %f", value);
+            break;
+        case UE1_STRPROPERTY:
+            UStringC value;
+            valstr = " = " + value.content;
+            break;
+        default:
+            ubyte raw_data[tag.size];
+            break;
+    }
+} UDefaultProperty <read=Str("%s%s       [%s]", tag.Name.name, valstr, EnumToString(tag.Type))>;
+
+typedef struct {
+    do {
+        UDefaultProperty property;
+        if (property.tag.Name.index.value == 0) break;
+    } while(1);
+} UDefaultProperties;
 
 typedef struct {
     if (ver <= 61) Vector3 data;

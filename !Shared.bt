@@ -119,3 +119,51 @@ typedef struct
 	ubyte r, g, b, a;
 } RGBA <read=Str("#%02X%02X%02X%02X", this.r, this.g, this.b, this.a), edit=color,
     comment=Str("#%02X%02X%02X%02X", this.r, this.g, this.b, this.a)>;
+
+typedef struct {
+    byte zero; Assert(zero == 0);
+} ZeroInt8 <bgcolor=cDkGray, fgcolor=cGray>;
+typedef struct {
+    short zero; Assert(zero == 0);
+} ZeroInt16 <bgcolor=cDkGray, fgcolor=cGray>;
+typedef struct {
+    int zero; Assert(zero == 0);
+} ZeroInt32 <bgcolor=cDkGray, fgcolor=cGray>;
+
+// UnrealEngine compressed integer
+typedef struct {
+    local int pos = FTell();
+    local int value = 0;
+    local int isSigned = 0;
+    local int length = 0;
+    local int i;
+    local ubyte x;
+
+    for (i = 0; i < 5; i++) {
+        x = ReadUByte(pos + i);
+        length++;
+
+        if (i == 0) {
+            // First byte
+            // Bit: X0000000 = sign
+            if ((x & 0x80) != 0) isSigned = 1;
+            // Bits: 00XXXXXX
+            value |= (x & 0x3F);
+            // Bit: 0X000000 = continuation
+            if ((x & 0x40) == 0) break;
+        } else if (i == 4) {
+            // Definitely last byte (5th)
+            // Bits: 000XXXXX (upper 3 bits ignored)
+            value |= (x & 0x1F) << (6 + (3 * 7));
+        } else {
+            // Middle bytes, possibly also last
+            // Bits: 0XXXXXXX = payload
+            value |= (x & 0x7F) << (6 + ((i - 1) * 7));
+            // Bit: X0000000 = continuation
+            if ((x & 0x80) == 0) break;
+        }
+    }
+
+    if (isSigned) value *= -1;
+    ubyte data[length];
+} CInt <read=Str("%i", this.value)>;
