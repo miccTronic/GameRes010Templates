@@ -1,0 +1,96 @@
+#include "..\!Shared.bt"
+//#include "T3IW_Shared.bt"
+
+typedef struct {
+    char magic[12];
+    int unk2, unk3, unk4;
+    int size;
+    int count;
+} Header <read=Str("%s   Counts = %i   RcdSize = %i", magic, count, size),
+    bgcolor=cLtPurple>;
+
+Header ANIMHEAD;
+
+Header BONENAMES;
+struct {
+    char name[64];
+    int Flags;
+    int NumChildren;
+    int ParentIndex;
+    Quaternion rotation;
+    Vector3 position;
+    float length;
+    Vector3 size;
+} bones[BONENAMES.count] <read=Str("%s", name), optimize=false>;
+
+Header ANIMINFO;
+struct {
+    char name[64];
+    char group[64];
+
+    int TotalBones;
+    int RootInclude;
+
+    int KeyCompressionStyle;
+    int KeyQuotum;
+    float KeyReduction;
+
+    float TrackTime;
+    float AnimRate;
+
+    int StartBone;
+    int FirstRawFrame;
+    int NumRawFrames;
+} infos[ANIMINFO.count] <read=Str("Name = '%s', Group = '%s'  (%f sec, rate = %f)", name, group, TrackTime, AnimRate), optimize=false>;
+
+Header ANIMKEYS;
+local int i <hidden=true>, j <hidden=true>, k <hidden=true>;
+for(i=0; i<ANIMINFO.count; i++) {
+    struct {
+        local int index <hidden=true> = i;
+        for(j=0; j<infos[i].NumRawFrames; j++) {
+            struct {
+                for(k=0; k<infos[i].TotalBones; k++) {
+                    struct {
+                        local int bone <hidden=true> = k;
+                        Vector3 pos;
+                        Quaternion rot;
+                        //Assert(rot.w >= 0 || k == 0);
+                        float t;
+                    //} bones <read=Str("Pos = (%f %f %f), Rot = (%f %f %f %f)", pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w), comment=Str("%s t = %f", bones[bone].name, t), optimize=false>;
+                    } bones <read=Str(" (%f %f %f %f)",rot.x, rot.y, rot.z, rot.w), optimize=false>;
+                }
+            } frames;
+        }
+
+        /*
+        for(j=0; j<infos[i].TotalBones; j++) {
+            struct {
+                local int bone <hidden=true> = j;
+                struct {
+                    Vector3 pos;
+                    Quaternion rot;
+                    float t;
+                } keys[infos[i].NumRawFrames] <read=Str("t = %f, Pos = (%f %f %f), Rot = (%f %f %f %f)", t, pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w), optimize=false>;
+            } bones <read=Str("%s", bones[bone].name)>;
+        }
+        */
+    } anims <read=Str("%s, %i frames", infos[index].name, infos[index].NumRawFrames)>;
+}
+
+/*
+struct {
+    Quaternion rot;
+    Vector3 pos;
+    float t;
+} keys[ANIMKEYS.count] <read=Str("t = %f, Pos = (%f %f %f), Rot = (%f %f %f %f)", t, pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w), optimize=false>;
+*/
+
+if (!FEof()) {
+
+    Header NOTETRACK;
+    struct {
+        ubyte data[NOTETRACK.size];
+    } notetrack[NOTETRACK.count] <optimize=false>;
+
+}

@@ -41,10 +41,12 @@ struct {
 Header REFSKELT;
 struct {
     char name[64];
-    int ints[3];
-    float floats[7];    
-    ubyte settings[16];
-} bones[REFSKELT.count] <optimize=false>;
+    int iFlags, iNumChildren, iParent;
+    Quaternion rot;
+    Vector3 pos;
+    float length;
+    Vector3 size;
+} bones[REFSKELT.count] <read=Str("%s  Parent = %i, Children = %i, Flags = %i", name, iParent, iNumChildren, iFlags), comment=Str("Pos = (%f %f %f)   Rot = (%f %f %f %f)", pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w), optimize=false>;
 
 Header RAWWEIGHTS;
 struct {
@@ -57,20 +59,28 @@ if (!FEof()) {
 
 Header VTXW0001;
 struct {
-    float anything[10];
-} wedges_2[VTXW0001.count] <optimize=false>;
+    ushort i1;
+    ubyte b1, b2;
+    Vector2 v1;
+    int i2; //mostly 0
+    Vector3 v2, v3;
+} wedges_2[VTXW0001.count] <read=Str("%i   %i   %i", i1, b1, b2), optimize=false>;
 
-Header SKNS0000;
-struct {
-    char name[64];
-    int i1, i2;
-} skins[SKNS0000.count] <optimize=false>;
+if (ReadString(FTell(), 8) == "SKNS0000") {
+    Header SKNS0000;
+    struct {
+        char name[64];
+        int i1, i2;
+    } skins[SKNS0000.count] <optimize=false>;
+}
 
-Header SMAT0000;
-struct {
-    char name[64];
-    int i1, i2;
-} skin_mats[SMAT0000.count] <optimize=false>;
+if (ReadString(FTell(), 8) == "SMAT0000") {
+    Header SMAT0000;
+    struct {
+        char name[64];
+        int i1, i2;
+    } skin_mats[SMAT0000.count] <optimize=false>;
+}
 
 typedef struct {
     // Unsure!

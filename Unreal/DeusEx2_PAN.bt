@@ -1,0 +1,7 @@
+// Deus Ex 2 .pan file format (processed skeletal animations)
+
+#define DXIW
+#include "..\!Shared.bt"
+#include "T3IW_Shared.bt"
+
+SkeletalAnimation_Processed pan <bgcolor=0xF0F0F0>;

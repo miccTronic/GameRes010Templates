@@ -1,0 +1,6 @@
+// Thief 3 .pan file format (processed skeletal animations)
+
+#include "..\!Shared.bt"
+#include "T3IW_Shared.bt"
+
+SkeletalAnimation_Processed pan <bgcolor=0xF0F0F0>;

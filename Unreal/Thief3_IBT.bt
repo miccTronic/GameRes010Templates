@@ -95,19 +95,143 @@ typedef struct {
     int num_lods; 
     float lod_thresholds[num_lods]; // max. screen size in pixels
     ZeroInt32 z[2] <optimize=false>;
-    int num2;
-    String32 names[num2] <optimize=false>;
-    int num3; Assert(num2 == num3);
-    ZeroInt32 z[num3 + 1] <optimize=false>;
-    int i9;
-    uint u10;
+    int num_animations;
+    String32 animations[num_animations] <optimize=false>;
+    int num3; Assert(num_animations == num3);
+    int unk[num3] <optimize=false>;
+    int i1, i2, payload_size;
     
-    SkeletalMesh_Pro pro;
-} SkeletalMesh <comment=Str("TODO")>;
+    SkeletalMesh_Processed pro;
+} SkeletalMesh <comment=Str("Version %i:   %i LODs, %i positions", pro.ver, num_lods, pro.num_positions.value)>;
 
 typedef struct {
-    int unk;
-} SkeletalMeshAnim <comment=Str("TODO")>;
+    float compression_rate;
+    int decompressed_size_maybe;
+    int i1;
+    String32 source;
+    int payload_size;
+    
+    SkeletalAnimation_Processed pan;
+} SkeletalMeshAnim <comment=Str("Anims = %i, Bones = %i", pan.num_anims.value, pan.num_bones.value)>;
+
+
+enum<ushort> LOGIC_TYPE {
+    LOGIC_AND = 0,
+    LOGIC_OR = 1,
+    LOGIC_NOT = 2,
+    LOGICAL_XOR = 3,
+};
+
+enum<uint> RELATION_TYPE {
+    RELA_NONE = 0,
+    RELA_EQUAL = 1,
+    RELA_LESS = 2,
+    RELA_LESS_EQUAL = 3,
+    RELA_GREATER = 4,
+    RELA_GREATER_EQUAL = 5,
+    RELA_NOT_EQUAL = 6,
+};
+
+struct TriggerScriptParam;
+struct TriggerScriptCond;
+typedef struct {
+    wstring type;
+    switch (type) {
+        case "kTPT_Bool":
+        case "kTPT_Int":
+            int num; Assert(num == 1);
+            int values[num];
+            break;
+        case "kTPT_Float":
+            int num; Assert(num == 1);
+            float values[num];
+            break;
+        case "kTPT_ByteEnum":
+            int num;
+            wstring name;
+            break;
+        case "kTPT_RelationType":
+        case "kTPT_DoorState":
+        case "kTPT_Operator":
+            int value;
+            break;
+        case "kTPT_Property":
+        case "kTPT_BoolProperty":
+            ushort property_id;
+            ushort flags;
+            if (flags & 8) {
+                wstring s1;
+            } else {
+                ushort h; Assert(h == 0);
+            }
+            break;
+        case "kTPT_PropertyValue":
+            TriggerScriptParam value;
+            break;
+        case "kTPT_Logic":
+            LOGIC_TYPE logic_type;
+            int num_children;
+            if (num_children > 100) Exit(1);
+            TriggerScriptCond child_conds[num_children] <optimize=false>;
+            break;
+        case "kTPT_String":
+        case "kTPT_Flag":
+        case "kTPT_AISensoryModel":
+        case "kTPT_SuperEnum":
+        case "kTPT_GlobalInt":
+        case "kTPT_SoundSchema":
+        case "kTPT_T3_InventoryClassParam":
+        case "kTPT_Name":
+        case "kTPT_AIBehaviorModel":
+        case "kTPT_AIFactionModel":
+        case "kTPT_AIMovementModel":
+            wstring value;
+            break;
+        case "kTPT_LinkFlavor":
+            wstring name;
+            ubyte b_myself;
+            ubyte b_player;
+            wstring s1;
+            ubyte b_invert; // unsure
+            break;
+        default:
+            //Warning(Str("Unknown action type: %s", type));
+            Assert(false);
+            wstring value;
+            break;
+    }
+} TriggerScriptParam <read=Str("%s", type)>;
+
+typedef struct
+{
+    wstring name;
+    int num_params;
+    if (num_params > 100) Exit(1);
+    TriggerScriptParam params[num_params] <optimize=false>;
+} TriggerScriptCond <read=Str("%s (%i params)", name, num_params)>;
+
+typedef struct
+{
+    wstring name;
+    int num_params;
+    if (num_params > 100) Exit(1);
+    TriggerScriptParam params[num_params] <optimize=false>;
+} TriggerScriptAct <read=Str("%s (%i params)", name, num_params)>;
+
+typedef struct {
+    int total_size;
+    int i1;
+    wstring id, name;
+#ifndef DXIW
+    ZeroInt16 z;
+#endif
+    int num_conds;
+    if (num_conds > 100) Exit(1);
+    TriggerScriptCond conds[num_conds] <optimize=false>;
+    int num_actions;
+    if (num_actions > 100) Exit(1);
+    TriggerScriptAct actions[num_actions] <optimize=false>;
+} TriggerScript <comment=Str("%s", name)>;
 
 
 
@@ -181,6 +305,9 @@ for (local int i=0; i < num_blocks; i++) {
             break;
         case RES_SKELETALANIM:
             SkeletalMeshAnim anim <bgcolor=0xEED0B0>;;
+            break;
+        case RES_TRIGGERSCRIPTDEF:
+            TriggerScript tscript <bgcolor=0xA0EEEE>;;
             break;
         default:
             struct {

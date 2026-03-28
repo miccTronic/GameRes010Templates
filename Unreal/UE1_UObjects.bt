@@ -28,7 +28,7 @@ typedef struct {
 
 typedef struct {
     int ver_one; Assert(ver_one == 1);
-    ubyte z1a; Assert(z1a == 0);
+    ZeroInt8 z1a;
     // --- ULevelBase ---
     struct {
         int unk1, unk2;
@@ -43,8 +43,8 @@ typedef struct {
     } level_base;
     // --- ULevel ---
     UIndex model;
-    ubyte zeros1[30];
-    if (!cDXIW) ubyte zero1b;
+    ZeroBytes zeros1(30);
+    if (!cDXIW) ubyte zero1b; // TODO: actually based on licensee level being >= 69
     // The following could be related to NavMeshes,
     // which are defined as nodes and links
     int num_ground_tris;
@@ -537,7 +537,7 @@ typedef struct {
 } UActor_T3DX;
 typedef struct {
     T3DX_Properties flesh_properties;
-    uint zero2; Assert(zero2 == 0);
+    //uint zero2; Assert(zero2 == 0);
 } UActor_NoLinks_T3DX;
 
 

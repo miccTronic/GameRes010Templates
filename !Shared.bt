@@ -45,6 +45,16 @@ typedef struct
         local char content;
     }
 } String32 <read=Str("%s", this.content), fgcolor=cDkRed>;
+// Unicode String with ushort prefix
+typedef struct
+{
+	ushort length;
+    if (length > 0) {
+        wchar_t content[length];
+    } else {
+        local wchar_t content;
+    }
+} WString16 <read=Str("%s", this.content), fgcolor=cDkRed>;
 // Unicode String with uint prefix
 typedef struct
 {
@@ -129,6 +139,11 @@ typedef struct {
 typedef struct {
     int zero; Assert(zero == 0);
 } ZeroInt32 <bgcolor=cDkGray, fgcolor=cGray>;
+typedef struct(int length) {
+    ubyte zero[length];
+    local int i <hidden=true>;
+    for (i = 0; i<length; i++) Assert(zero[i] == 0);
+} ZeroBytes <bgcolor=cDkGray, fgcolor=cGray>;
 
 // UnrealEngine compressed integer
 typedef struct {

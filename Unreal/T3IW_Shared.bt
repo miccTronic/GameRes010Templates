@@ -158,7 +158,7 @@ typedef CInt CCount <bgcolor=cAqua, fgcolor=cRed>;
 
 typedef struct {
     local int i <hidden=true> = 0;
-    int ver; Assert(ver == 2 || ver == 7 || ver == 8);
+    int ver; Assert(ver == 2 || ver == 5 || ver == 7 || ver == 8);
     ZeroInt32 z <hidden=true>;
     BBox bbox;
     ubyte bbox_isvalid; Assert(bbox_isvalid == 1);
@@ -233,11 +233,11 @@ typedef struct {
     
     CCount num_mats;
     struct {
-        if (ver >= 7) char name[64];
+        if (ver >= 5) char name[64];
         uint flags1, flag2;
     } MATS[num_mats.value] <optimize=false, bgcolor=0xCCCCFF>;
     
-    float f1;
+    float f2;
     ZeroInt32 z1 <hidden=true>;
     float strength <hidden=true>;
     int min_verts <hidden=true>;  Assert(min_verts == 10);
@@ -254,21 +254,20 @@ typedef struct {
         Quaternion rot;
         Vector3 pos;
         ZeroInt32 z1, z2, z3, z4;
-        int iFlags, iParent;
-    } BONES[num_bones.value] <read=Str("%s, Parent = %i, Flags = %i", name.content, iParent, iFlags), comment=Str("Pos = (%f %f %f)   Rot = (%f %f %f %f)", pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w), optimize=false, bgcolor=0xEEFFEE>;
+        int iNumChildren, iParent;
+    } BONES[num_bones.value] <read=Str("%s, Parent = %i, Children = %i", name.content, iParent, iNumChildren), comment=Str("Pos = (%f %f %f)   Rot = (%f %f %f %f)", pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w), optimize=false, bgcolor=0xEEFFEE>;
     
     if (ver != 2) ZeroInt32 z3 <hidden=true>;
     int flags; //Assert(flags == 3 || flags == 4 || flags == 5 || flags == 6 || flags == 8 || flags == 12 || flags == 13);
     local string flags_str = IntToBinaryStr(flags);
     
-    // Maps positions or verts to bones/weights (next array).
+    // Maps verts (most likely) to bones/weights (next array).
     // Because the next array is flat, and verts may have different
     // assignment counts, this map is sorted by assignment count.
     // I.e. first come the verts with 1 weights, then with 2 weights etc.
     // E.g. list index 2 means all verts that have 3 weights assigned.
-    // It's NOT clear what the value means yet... maybe the verts are not
-    // pre-sorted by assignment count, and we must do a reverse lookup?
-    // It COULD also be an index into the norm-tan list...
+    // The ordering in the indices list is probably irrelevant, but
+    // the *values* probably map to verts (reverse lookup).
     CCount num_bam;
     i = 0;
     struct {
@@ -323,7 +322,7 @@ typedef struct {
     } MAT_ASSIGNMENTS[num_mats_2.value] <read=Str("Mat %i: indices? = [%i..%i] = %i   faces = [%i..%i] = %i    %i %i %i", mat_index, off1, off1+count1, count1, off2, off2+count2, count2, h3, h4, h5), optimize=false, bgcolor=0xBBFFBB>;
     Assert(num_mats.value == num_mats_2.value);
     
-    if (ver >= 7) {
+    if (ver >= 5) {
         // Normal + Tangent?
         // In any case, it seems to be one per LOD_0 vertex.
         CCount num_normals;
@@ -373,4 +372,159 @@ typedef struct {
             }
         }
     }
-} SkeletalMesh_Pro;
+} SkeletalMesh_Processed;
+
+
+typedef struct {
+    ZeroInt32 z1;
+    
+    CCount num_bones;
+    struct {
+        String8 name;
+        int a, b; // b is probably parent index
+    } bones[num_bones.value] <read=Str("%s --> %i %i", name.content, a, b), optimize=false>;
+    
+    CCount num_anims;
+
+    struct {
+        ZeroBytes z2(12) <hidden=true>; // offset vector?
+        float duration;
+        ZeroBytes z3(9) <hidden=true>;
+    
+        CCount num_bones_repeat;
+        Assert(num_bones_repeat.value == num_bones.value);
+        
+        local int i <hidden=true> = 0;
+        struct {
+            local int index <hidden=true> = i++;
+#ifdef DXIW
+            int mode <fgcolor=cPurple>; Assert(mode == 0 || mode == 1 || mode == 2);
+            CInt qtable_frames_DX2 <fgcolor=cRed>;
+            local int qtable_frames = qtable_frames_DX2.value;
+#else
+            ubyte mode <fgcolor=cPurple>; Assert(mode == 1 || mode == 2);
+            int qtable_frames <fgcolor=cRed>;
+#endif
+            if (mode == 0) {
+                // uncompressed?
+                Vector4 qtable[qtable_frames] <bgcolor=cDkPurple, fgcolor=cWhite, optimize=false>;
+            } else if (mode == 1) {
+                // default
+                struct {
+                    local float scaler <hidden=true> = 32768;
+                    short x, y, z;
+                    ubyte start_frame;
+                    ubyte neg_x : 1;
+                    ubyte neg_y : 1;
+                    ubyte neg_z : 1;
+                    ubyte neg_w : 1;
+                    ubyte zero : 4;
+#ifndef DXIW
+                    Assert(zero == 0);
+#endif
+                    local float x2 = (float)x/scaler * (neg_x ? 1 : -1);
+                    local float y2 = (float)y/scaler * (neg_y ? 1 : -1);
+                    local float z2 = (float)z/scaler * (neg_z ? 1 : -1);
+                    local float w2 = Sqrt(1.0 - (x2 * x2) - (y2 * y2) - (z2 * z2)) * (neg_w ? 1 : -1);
+                } qtable[qtable_frames] <bgcolor=cLtPurple, read=Str("(%f  %f  %f  %f)  frame = %i", x2, y2, z2, w2, start_frame), optimize=false>;
+            } else if (mode == 2) {
+                // packed
+#ifdef DXIW
+                struct {
+                    local float scaler <hidden=true> = 1048575;
+                    // Packed variables
+                    uint64 z : 20;
+                    uint64 y : 20;
+                    uint64 x : 20;
+                    uint64 neg_w : 1;
+                    uint64 neg_z : 1;
+                    uint64 neg_y : 1;
+                    uint64 neg_x : 1;
+                    local float x2 = (float)x/scaler * (neg_x ? 1 : -1);
+                    local float y2 = (float)y/scaler * (neg_y ? 1 : -1);
+                    local float z2 = (float)z/scaler * (neg_z ? 1 : -1);
+                    local float w2 = Sqrt(1.0 - (x2 * x2) - (y2 * y2) - (z2 * z2)) * (neg_w ? 1 : -1);
+                } qtable[qtable_frames] <bgcolor=0xD0D0FF, read=Str("(%f  %f  %f  %f)", x2, y2, z2, w2), optimize=false>;
+                /*
+                struct {
+                    ubyte bytes[8];
+                } qtable[qtable_frames] <bgcolor=0xD0D0FF, read=Str("%s %s   %s %s   %s %s   %s %s", IntToBinaryStr(bytes[0]), IntToBinaryStr(bytes[1]), IntToBinaryStr(bytes[2]), IntToBinaryStr(bytes[3]), IntToBinaryStr(bytes[4]), IntToBinaryStr(bytes[5]), IntToBinaryStr(bytes[6]), IntToBinaryStr(bytes[7])), optimize=false>;
+                */
+#else
+                struct {
+                    local float scaler <hidden=true> = 262143;
+                    // Packed variables
+                    uint64 z : 18;
+                    uint64 y : 18;
+                    uint64 x : 18;
+                    uint64 neg_z : 1;
+                    uint64 neg_y : 1;
+                    uint64 neg_x : 1;
+                    uint64 start_frame : 7;
+                    local ubyte neg_w <hidden=true> = 1;
+                    local float x2 = (float)x/scaler * (neg_x ? 1 : -1);
+                    local float y2 = (float)y/scaler * (neg_y ? 1 : -1);
+                    local float z2 = (float)z/scaler * (neg_z ? 1 : -1);
+                    local float w2 = Sqrt(1.0 - (x2 * x2) - (y2 * y2) - (z2 * z2)) * (neg_w ? 1 : -1);
+                } qtable[qtable_frames] <bgcolor=0xD0D0FF, read=Str("(%f  %f  %f  %f)   frame = %i", x2, y2, z2, w2, start_frame), optimize=false>;
+#endif
+            }
+#ifdef DXIW
+            CInt ptable_frames <fgcolor=cRed>;
+            Vector3 positions[ptable_frames.value] <bgcolor=0xE0FFE0, optimize=false>;
+            local int ptable_frames_count <hidden=true> = ptable_frames.value;
+            if (mode == 0) {
+                CInt timetable_frames <fgcolor=cRed>;
+                float times[timetable_frames.value] <bgcolor=cDkBlue, fgcolor=cWhite>;
+            } else if (mode == 2) {
+                CInt timetable_frames <fgcolor=cRed>;
+                ushort times[timetable_frames.value] <bgcolor=0xFFE0A0>;
+            }
+#else
+            int ptable_shorts <fgcolor=cRed>;
+            Assert(ptable_shorts % 3 == 0);
+            struct {
+                short a, b, c;
+            } ptable[ptable_shorts / 3] <bgcolor=0xE0FFE0, read=Str("(%f  %f  %f)", (float)a / 64, (float)b / 64, (float)c / 64), optimize=false>;
+            local int ptable_frames_count <hidden=true> = ptable_shorts / 3;
+#endif
+        } anim_bones[num_bones_repeat.value] <read=Str("qFrames = %i, pFrames = %i, Mode = %i", qtable_frames, ptable_frames_count, mode), optimize=false>;
+        
+        ubyte mode_repeat <bgcolor=cGreen>; Assert(mode_repeat == 0 || mode_repeat == 1 || mode_repeat == 2);
+        ZeroInt16 z4 <hidden=true>;
+#ifdef DXIW
+        if (mode_repeat == 1) {
+            ZeroBytes z2(3);
+        } else if (mode_repeat == 2 || mode_repeat == 0) {
+            ZeroInt32 z6 <hidden=true>;
+        }
+        /*
+        ushort unk3; Assert(unk3 == 0 || unk3 == 1);
+        if (unk3 == 1) {
+            struct {
+                ubyte b1; Assert(b1 == 2);
+                ZeroInt32 z1;
+            } foo <bgcolor=cPurple>;
+        }
+        ZeroInt8 z2;
+        ZeroInt8 z5 <hidden=true>;
+        */
+#else
+        ZeroInt16 z5 <hidden=true>;
+        ZeroInt32 z6 <hidden=true>;
+#endif
+    } anim[num_anims.value] <optimize=false>;
+
+    CCount num_anims_2;
+    struct {
+        String8 name, s2;
+        ZeroInt32 z;
+        int num_frames;
+        ubyte num_events;
+        struct {
+            float time;
+            String8 bone, event, arg;
+        } events[num_events] <read=Str("Bone = %s, Event = %s, arg = %s", bone.content, event.content, arg.content), optimize=false>;
+        float fps_maybe;
+    } anim_info[num_anims_2.value] <read=Str("%s (Frames = %i, Events = %i)", name.content, num_frames, num_events), optimize=false>;
+} SkeletalAnimation_Processed;
