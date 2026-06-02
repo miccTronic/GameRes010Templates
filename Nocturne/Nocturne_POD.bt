@@ -1,0 +1,203 @@
+//------------------------------------------------
+//--- 010 Editor v15.0 Binary Template
+//
+//      File: NocturnePOD.bt
+//   Authors: GameResourceTools research notes / Codex
+//   Purpose: Parse Terminal Reality POD archives used by Nocturne.
+//  Category: Archive
+// File Mask: *.pod
+//  ID Bytes: 50 4F 44 32
+//
+// References:
+// - AllOtherImporters/analysis/nocturne-research.md
+// - https://github.com/jopadan/termpod
+//
+// Notes:
+// - Nocturne primarily ships POD2 archives.
+// - tground.pod in the tested Nocturne install is an older POD1-style archive.
+// - The final POD2 header uint32 is named auditCount in termpod, but the tested
+//   Nocturne files place file data immediately after the name table. This
+//   template exposes the raw field without assuming an audit table is present.
+//------------------------------------------------
+
+LittleEndian();
+
+local int PARSE_FILE_DATA = 0;
+
+const uint32 POD2_SIGNATURE = 0x32444F50; // "POD2"
+const uint32 POD1_HEADER_SIZE = 84;
+const uint32 POD2_HEADER_SIZE = 96;
+const uint32 POD1_ENTRY_SIZE = 40;
+const uint32 POD2_ENTRY_SIZE = 20;
+
+local uint32 gPod2NameTableStart = 0;
+local uint32 gPod2NameTableSize = 0;
+
+string ReadUnixTime(int32 timestamp)
+{
+    string result;
+    SPrintf(result, "%d", timestamp);
+    return result;
+}
+
+typedef struct
+{
+    uint32 entryCount;
+    char comment[80];
+} POD1_HEADER;
+
+typedef struct
+{
+    char name[32];
+    uint32 size;
+    uint32 offset <format=hex>;
+} POD1_ENTRY <read=ReadPOD1Entry>;
+
+typedef struct(uint32 size)
+{
+    ubyte bytes[size];
+} POD_DATA_BLOCK;
+
+typedef struct
+{
+    POD1_HEADER header;
+
+    if (header.entryCount > 0 && POD1_HEADER_SIZE + header.entryCount * POD1_ENTRY_SIZE <= FileSize())
+    {
+        POD1_ENTRY entries[header.entryCount];
+
+        local uint32 i;
+
+        if (PARSE_FILE_DATA)
+        {
+            local int64 savedPosition = FTell();
+
+            for (i = 0; i < header.entryCount; i++)
+            {
+                if (entries[i].offset <= FileSize() && entries[i].size <= FileSize() - entries[i].offset)
+                {
+                    FSeek(entries[i].offset);
+                    POD_DATA_BLOCK data(entries[i].size) <name=entries[i].name>;
+                }
+            }
+
+            FSeek(savedPosition);
+        }
+    }
+    else
+    {
+        Warning("POD1 entry table extends beyond the file; parsing stopped after header.");
+    }
+} POD1_ARCHIVE;
+
+typedef struct
+{
+    char ident[4];
+    uint32 checksum <format=hex>;
+    char comment[80];
+    uint32 entryCount;
+    uint32 auditCountOrUnknown;
+} POD2_HEADER;
+
+typedef struct
+{
+    uint32 nameOffset <format=hex>;
+    uint32 size;
+    uint32 offset <format=hex>;
+    int32 timestamp <read=ReadUnixTime>;
+    uint32 checksum <format=hex>;
+} POD2_ENTRY <read=ReadPOD2Entry>;
+
+typedef struct(uint32 size)
+{
+    char bytes[size];
+} POD2_NAME_TABLE;
+
+string ReadPOD1Entry(POD1_ENTRY &entry)
+{
+    string result;
+    SPrintf(result, "%s  offset=0x%08X  size=%u", entry.name, entry.offset, entry.size);
+    return result;
+}
+
+string ReadPOD2EntryName(POD2_ENTRY &entry)
+{
+    if (gPod2NameTableStart == 0 || entry.nameOffset >= gPod2NameTableSize)
+        return "<bad name offset>";
+
+    return ReadString(gPod2NameTableStart + entry.nameOffset);
+}
+
+string ReadPOD2Entry(POD2_ENTRY &entry)
+{
+    string result;
+    SPrintf(result, "%s  offset=0x%08X  size=%u  crc=0x%08X",
+        ReadPOD2EntryName(entry),
+        entry.offset,
+        entry.size,
+        entry.checksum);
+    return result;
+}
+
+typedef struct
+{
+    POD2_HEADER header;
+
+    if (header.entryCount > 0 && POD2_HEADER_SIZE + header.entryCount * POD2_ENTRY_SIZE <= FileSize())
+    {
+        POD2_ENTRY entries[header.entryCount];
+
+        local uint32 i;
+        local uint32 minDataOffset = FileSize();
+        local uint32 namesStart = POD2_HEADER_SIZE + header.entryCount * POD2_ENTRY_SIZE;
+
+        for (i = 0; i < header.entryCount; i++)
+        {
+            if (entries[i].offset < minDataOffset)
+                minDataOffset = entries[i].offset;
+        }
+
+        if (minDataOffset >= namesStart && minDataOffset <= FileSize())
+        {
+            gPod2NameTableStart = namesStart;
+            gPod2NameTableSize = minDataOffset - namesStart;
+
+            POD2_NAME_TABLE names(gPod2NameTableSize);
+
+            if (PARSE_FILE_DATA)
+            {
+                local int64 savedPosition = FTell();
+
+                for (i = 0; i < header.entryCount; i++)
+                {
+                    if (entries[i].offset <= FileSize() && entries[i].size <= FileSize() - entries[i].offset)
+                    {
+                        FSeek(entries[i].offset);
+                        POD_DATA_BLOCK data(entries[i].size) <name=ReadPOD2EntryName(entries[i])>;
+                    }
+                }
+
+                FSeek(savedPosition);
+            }
+        }
+        else
+        {
+            Warning("POD2 name table bounds are invalid; parsing stopped after entries.");
+        }
+    }
+    else
+    {
+        Warning("POD2 entry table extends beyond the file; parsing stopped after header.");
+    }
+} POD2_ARCHIVE;
+
+local uint32 signatureProbe = ReadUInt(0);
+
+if (signatureProbe == POD2_SIGNATURE)
+{
+    POD2_ARCHIVE archive;
+}
+else
+{
+    POD1_ARCHIVE archive;
+}

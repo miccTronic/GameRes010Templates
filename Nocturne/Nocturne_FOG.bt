@@ -1,0 +1,75 @@
+//------------------------------------------------
+// Nocturne Engine FOG Template
+// Games: Nocturne, Blair Witch 1, Blair Witch 2, Blair Witch 3
+//
+// .FOG files are backdrop-camera fog support files. The stored grid is the
+// first 0x1000 bytes of the engine SFogGrid: 16 slices of 16x16 byte density
+// samples. The full runtime SFogGrid is 0x1020 bytes, but sampling offset,
+// scroll vector, height threshold, and density multiplier are not serialized
+// into .FOG; they come from the active scene/camera fog state.
+//
+// Layout:
+//   0x0000 byte[16][16][16] fog density grid
+//   0x1000 optional three-byte tag: EFD or legacy LZW
+//   0x1003 tagged CLZW-compressed fog residual payload
+//
+// If bytes after 0x1000 do not begin with EFD/LZW, the runtime seeks back and
+// treats the remaining bytes as raw 320x240 fog image planes. Validate only the
+// three-byte tag; BW2 has valid EFD payloads where the first payload byte is DE.
+//------------------------------------------------
+
+LittleEndian();
+
+local int FileLength = FileSize();
+local int GridByteCount = 0x1000;
+local int FogImageWidth = 320;
+local int FogImageHeight = 240;
+local int FogImagePlaneByteCount = FogImageWidth * FogImageHeight;
+
+typedef struct
+{
+    uchar Density[16] <optimize=false>;
+} NOCTURNE_FOG_GRID_ROW;
+
+typedef struct
+{
+    NOCTURNE_FOG_GRID_ROW Row[16] <optimize=false>;
+} NOCTURNE_FOG_GRID_PLANE;
+
+typedef struct
+{
+    NOCTURNE_FOG_GRID_PLANE Plane[16] <optimize=false>;
+} NOCTURNE_FOG_GRID;
+
+if (FileLength < GridByteCount)
+{
+    uchar TruncatedData[FileLength];
+}
+else
+{
+    NOCTURNE_FOG_GRID Grid;
+
+    if (FileLength > GridByteCount)
+    {
+        local int RawPayloadLength = FileLength - GridByteCount;
+        char TagProbe[3] <hidden=true>;
+        local int HasTaggedPayload = 0;
+
+        if ((TagProbe[0] == 'E' && TagProbe[1] == 'F' && TagProbe[2] == 'D') ||
+            (TagProbe[0] == 'L' && TagProbe[1] == 'Z' && TagProbe[2] == 'W'))
+            HasTaggedPayload = 1;
+
+        FSeek(GridByteCount);
+
+        if (HasTaggedPayload)
+        {
+            char Tag[3];
+            local int CompressedPayloadLength = FileLength - GridByteCount - 3;
+            uchar CompressedPayload[CompressedPayloadLength] <optimize=true>;
+        }
+        else
+        {
+            uchar RawFogImagePayload[RawPayloadLength] <optimize=true>;
+        }
+    }
+}

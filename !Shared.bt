@@ -98,6 +98,10 @@ typedef struct
 } Mat4x4 <fgcolor=0xD0D000>;
 typedef struct
 {
+	Vector3 row1, row2, row3;
+} Mat3x3 <fgcolor=0xD0D000>;
+typedef struct
+{
 	float x, y, z, d;
 } Plane <read=Str("(%f, %f, %f) + %f", this.x, this.y, this.z, this.d)>;
 typedef struct

@@ -1,0 +1,23 @@
+//------------------------------------------------
+// Nocturne Engine RAW Byte Plane Template
+// Games: Nocturne, Blair Witch 1, Blair Witch 2, Blair Witch 3
+//
+// RAW is a headerless 8-bit image/scalar payload. Most image RAW files are
+// palette indices into a same-stem ACT file. Some DATA/*.RAW resources are
+// scalar masks or current-palette/light/filter data rather than normal art.
+// Dimensions are inferred externally from path/name/size. Common confirmed
+// shapes include square powers of two, 640x480 backdrops, Nocturne NOCxxxxx
+// frames at 640x278, BW2 BLAIRWITCH_xx frames at 640x291, and BW3 BLAIR_xxxxx
+// frames at 320x330.
+//------------------------------------------------
+
+LittleEndian();
+
+local int FileLength = FileSize();
+
+typedef struct
+{
+    uchar Indices[FileLength] <optimize=true>;
+} NOCTURNE_RAW_FILE;
+
+NOCTURNE_RAW_FILE Raw;

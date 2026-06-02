@@ -1,0 +1,74 @@
+//------------------------------------------------
+//--- 010 Editor v16 Binary Template
+//
+//      File: Nocturne_GEO.bt
+//   Purpose: Parse Terminal Reality Nocturne-engine .GEO static scene geometry.
+//  Encoding: Binary little-endian. Shipped Nocturne/BW1/BW2/BW3 files are version 4.
+//
+// Notes:
+// - GEO is the runtime static scene mesh, partitioned into a spatial grid for
+//   rendering, collision, ground/material typing, voxel occupancy, and PVS.
+// - The companion SET file names the GEO explicitly; do not assume the SET
+//   basename and GEO basename match.
+// - Version 4 cell payload order is vertices, triangles, ground_type_memory,
+//   then a 64-byte SVoxelGrid. Empty cells store only bounds and zero counts.
+// - There is no padding between cells. ground_type_memory[TriangleCount] can
+//   place the following cell at an odd offset.
+// - Triangle vertex indices are local to the containing cell.
+// - The 64-byte SVoxelGrid is an 8x8x8 occupancy bitfield: byte index is
+//   z * 8 + y, with bit x selecting the occupied sub-voxel.
+// - BW3 exercises large grids and broad values: SP_SET1.GEO is 65x15x90,
+//   dense cells can exceed 20,000 vertices, and ground_type_memory should be
+//   preserved as raw bytes.
+//------------------------------------------------
+
+LittleEndian();
+
+typedef struct
+{
+    float X;
+    float Y;
+    float Z;
+} GEO_VEC3F;
+
+typedef struct
+{
+    uint I0 <comment="Cell-local vertex index 0.">;
+    uint I1 <comment="Cell-local vertex index 1.">;
+    uint I2 <comment="Cell-local vertex index 2.">;
+    GEO_VEC3F Normal;
+    float PlaneDistance;
+    uint DominantAxis <comment="0=X, 1=Y, 2=Z, computed from largest absolute normal component.">;
+} GEO_TRIANGLE;
+
+typedef struct
+{
+    GEO_VEC3F Min;
+    GEO_VEC3F Max;
+    int VertexCount;
+    int TriangleCount;
+
+    if (VertexCount > 0)
+        GEO_VEC3F Vertices[VertexCount] <comment="Cell-local vertex positions.">;
+
+    if (TriangleCount > 0)
+    {
+        GEO_TRIANGLE Triangles[TriangleCount] <comment="Cell-local indexed triangles.">;
+        uchar GroundTypes[TriangleCount] <comment="Per-triangle ground/material type bytes.">;
+        uchar VoxelGrid[64] <comment="8x8x8 occupancy bitfield: index z*8+y, bit x.">;
+    }
+} GEO_CELL;
+
+typedef struct
+{
+    int Version <comment="Observed 4 in all shipped Nocturne/BW1/BW2/BW3 samples.">;
+    int GridX;
+    int GridY;
+    int GridZ;
+    GEO_VEC3F WorldMin;
+    GEO_VEC3F WorldMax;
+    GEO_VEC3F CellSize;
+    GEO_CELL Cells[GridX * GridY * GridZ] <comment="Cells are stored in z-fastest order.">;
+} NOCTURNE_GEO_FILE;
+
+NOCTURNE_GEO_FILE GeoFile <open=true>;

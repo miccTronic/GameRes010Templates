@@ -1,0 +1,58 @@
+//------------------------------------------------
+//--- 010 Editor v16 Binary Template
+//
+//      File: Nocturne_PTH.bt
+//   Purpose: Inspect Terminal Reality Nocturne-engine .PTH course files.
+//  Encoding: Shipped Nocturne/BW1/BW2/BW3 .PTH files are ASCII text,
+//            version 1. No binary .PTH files were found in the four tested
+//            game corpora.
+//
+// Notes:
+// - PTH stores sampled transform courses for platforms, bats, menu cameras,
+//   and similar actors. It is motion-course data, not waypoint/pathfinding or
+//   scene navigation mesh data.
+// - Rows are frame-space samples. The file has no intrinsic timing; actor code
+//   supplies speed or normalized playback parameters.
+// - Position order is x,y,z, with Y as the engine vertical axis.
+// - Orientation order is quaternion w,x,y,z, as written by CCourse::save and
+//   documented in the frameList label. Quaternions should be normalized before
+//   evaluation/export.
+// - loopFlag controls evaluation directly: zero clamps to [0, frameCount - 1],
+//   non-zero wraps modulo frameCount, including negative sample positions.
+// - Platform actors can load a looping PTH and then force loop off at runtime.
+// - BW2 includes orientation-only courses with nearly constant positions; do
+//   not discard zero-translation paths as degenerate.
+// - BW2/BW3 share some AWK_TWANA*.PTH assets in different directories; resolve
+//   by actual path/manifests rather than fixed DATA-only lookup.
+// - Fully tokenizing the text grammar in 010 would require a custom line parser;
+//   this template safely distinguishes text from unknown binary-looking data and
+//   exposes the complete payload while documenting the parse layout.
+//------------------------------------------------
+
+LittleEndian();
+
+typedef struct {
+    int VersionOrMagic;
+    if (FTell() < FileSize())
+        uchar Payload[FileSize() - FTell()];
+} PTH_UNKNOWN_BINARY_FILE;
+
+local int64 FileStart = FTell();
+uchar Probe0;
+uchar Probe1;
+FSeek(FileStart);
+
+if ((Probe0 == '/' && Probe1 == '/') || Probe0 == '-' || Probe0 == '+' || Probe0 == '.' || (Probe0 >= '0' && Probe0 <= '9')) {
+    // Text PTH grammar:
+    //   // version
+    //   versionNumber                    // observed: 1
+    //   // len,loop
+    //   frameCount,loopFlag
+    //   // frameList: pos(x,y,z), orient(w,x,y,z)
+    //   frame[frameCount]:
+    //     pos.x,pos.y,pos.z, orient.w,orient.x,orient.y,orient.z
+    char TextPth[FileSize() - FileStart];
+} else {
+    // Present only as a guard: no binary .PTH corpus sample is currently known.
+    PTH_UNKNOWN_BINARY_FILE BinaryPth;
+}

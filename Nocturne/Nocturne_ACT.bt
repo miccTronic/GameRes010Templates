@@ -1,0 +1,34 @@
+//------------------------------------------------
+// Nocturne Engine ACT Palette Template
+// Games: Nocturne, Blair Witch 1, Blair Witch 2, Blair Witch 3
+//
+// ACT stores RGB888 palette entries. Canonical files are 256 triples = 768
+// bytes, but the BW3 corpus also contains short/surplus variants around this
+// size. Consumers should expose a 256-entry palette view: short palettes are
+// padded with black, and surplus bytes are retained for analysis.
+//------------------------------------------------
+
+LittleEndian();
+
+local int FileLength = FileSize();
+local int EntryCount = FileLength / 3;
+if (EntryCount > 256)
+    EntryCount = 256;
+
+typedef struct
+{
+    uchar Red;
+    uchar Green;
+    uchar Blue;
+} NOCTURNE_ACT_COLOR;
+
+typedef struct
+{
+    NOCTURNE_ACT_COLOR Colors[EntryCount] <optimize=false>;
+
+    local int ExtraByteCount = FileLength - EntryCount * 3;
+    if (ExtraByteCount > 0)
+        uchar ExtraBytes[ExtraByteCount];
+} NOCTURNE_ACT_FILE;
+
+NOCTURNE_ACT_FILE Palette;

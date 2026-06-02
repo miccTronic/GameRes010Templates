@@ -3,17 +3,22 @@
 Games for which you will find at least _some_ data file parsing support:
 
 * LithTech 5 (by Monolith), as used in
-  * FEAR 2 ("Loki" branch)
-  * Condomned 2 ("Yeti" branch)
+	* FEAR 2 ("Loki" branch)
+	* Condomned 2 ("Yeti" branch)
 * Asura Engine (by Rebellion), but only the variant used in
-  * Aliens vs. Predator (2010)
+	* Aliens vs. Predator (2010)
 * Unreal Engine 1/2 packages, in particular structures for
-  * Thief 3: Deadly Shadows
-  * Deus Ex 2: Invisible War
+	* Thief 3: Deadly Shadows
+	* Deus Ex 2: Invisible War
 * Incubation (by Blue Byte, 1997)
+* Nocturne / Demon Engine (by Terminal Reality)
+	* Nocturne
+	* Blair Witch I/II/III
+* King's Quest VIII: The Mask of Eternity
 
 ... to be expanded continuously. :-)
 
 Possible only with the help of many great individuals of the modding and res-haxing community.
+Some templates have also been assembled with assistance from AI tools (CODEX). This has usually been indicates in the .bt file.
 
 If you have any fixes or other contributions, feel free to create an issue or a send a pull request!

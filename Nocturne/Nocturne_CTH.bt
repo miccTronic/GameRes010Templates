@@ -1,0 +1,75 @@
+//------------------------------------------------
+//--- 010 Editor v16 Binary Template
+//
+//      File: Nocturne_CTH.bt
+//   Purpose: Inspect Terminal Reality Nocturne-engine .CTH cloth sidecar files.
+//  Encoding: Shipped Nocturne/BW1/BW2/BW3 .CTH files are ASCII text,
+//            versions 1 through 3. No binary .CTH files were found in the
+//            four tested game corpora.
+//
+// Notes:
+// - CTH binds a cloth KFM mesh to pinned vertices and actor skeleton collision
+//   volumes. It is a sidecar for coats, dresses, hair, wings, guts, fins, etc.
+// - The model field references the cloth .KFM in the models directory. Case is
+//   not reliable across all games, for example BW3 STRCOAT.CTH references
+//   strcoat.kfm while the file is STRCOAT.KFM.
+// - v1/v2 store six authored physics floats, but the Nocturne executable reads
+//   then overwrites them with runtime defaults: weight=0.125, gravity=32,
+//   dampen=0.9, spring=0.005, bodyFriction=0.5, floorFriction=0.5,
+//   windArea=0.05, momInert=0.15.
+// - v3 stores and uses all eight physics floats, adding windArea and momInert.
+// - doubleSided exists for v2+ only; v1 implicitly uses false.
+// - lockedVertexList contains zero-based KFM vertex indices pinned by the cloth
+//   simulation.
+// - collideBone rows bind to actor/deformable skeleton bones, not to the cloth
+//   KFM. Names should be matched case-insensitively.
+// - Collider row order is:
+//     "bone", radius1,radius2, offset.x,offset.y,offset.z,
+//     rotation.x,rotation.z,rotation.y, length
+//   length <= 0 means the engine can derive length from the farthest child bone.
+// - Zero colliders, negative near-zero gravity, and zero-sized colliders occur
+//   in shipped Blair Witch data and should be treated as valid.
+// - Fully tokenizing the text grammar in 010 would require a custom line parser;
+//   this template safely distinguishes text from unknown binary-looking data and
+//   exposes the complete payload while documenting the parse layout.
+//------------------------------------------------
+
+LittleEndian();
+
+typedef struct {
+    int VersionOrMagic;
+    if (FTell() < FileSize())
+        uchar Payload[FileSize() - FTell()];
+} CTH_UNKNOWN_BINARY_FILE;
+
+local int64 FileStart = FTell();
+uchar Probe0;
+uchar Probe1;
+FSeek(FileStart);
+
+if ((Probe0 == '/' && Probe1 == '/') || Probe0 == 'v' || Probe0 == 'V' || (Probe0 >= '0' && Probe0 <= '9')) {
+    // Text CTH grammar:
+    //   version
+    //   versionNumber                    // 1, 2, or 3
+    //   model
+    //   kfmFileName
+    //   mass/weight physics label
+    //   v1/v2: weight,gravity,dampen,spring,bodyFriction,floorFriction
+    //   v3:    weight,gravity,dampen,spring,bodyFriction,floorFriction,windArea,momInert
+    //   transparency
+    //   float
+    //   [v2+] doubleSided
+    //   [v2+] 0 or 1
+    //   lockedVertexCount
+    //   int
+    //   lockedVertexList
+    //   int[lockedVertexCount]
+    //   collideBoneCount
+    //   int
+    //   collider[collideBoneCount]:
+    //     "bone",radius1,radius2, offset.x,offset.y,offset.z, rotation.x,rotation.z,rotation.y, length
+    char TextCth[FileSize() - FileStart];
+} else {
+    // Present only as a guard: no binary .CTH corpus sample is currently known.
+    CTH_UNKNOWN_BINARY_FILE BinaryCth;
+}

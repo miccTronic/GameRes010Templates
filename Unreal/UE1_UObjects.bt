@@ -286,28 +286,32 @@ typedef struct {
     UBSphere bsphere;
     // Just a guess - could also be something else!
     CInt num_nodes;
+    local int max1, max2;
     struct {
 		Vector4 plane;
         ubyte zeros[33];
         // the following may also be bytes
-		CInt VertPool;
-		CInt Surf;
-		CInt Child0;
-		CInt Child1;
-		CInt Child3;
-		CInt CollisionBound;
-		CInt RenderBound;
+		CInt vert_offset;
+		CInt idx1;
+		CInt idx2;
+		CInt child1;
+		CInt child2;
+		CInt child3;
+		CInt idx3;
 		//CInt Zone0;
 		//CInt Zone1;
         Vector4 ExclusiveSphereBound; // maybe
         ubyte zeros2[20];
-        CInt other; // or byte? NumVertices?
+        CInt num_vertices;
 		int64 ZoneMask;
 		int unk1; // iSection? iFirstVertex? iLightMap?
-		int vert_offset; // maybe?
+		int vert_offset_2; // maybe?
+        max1 = Max(max1, vert_offset.value);
+        max2 = Max(max2, vert_offset_2);
     } nodes[num_nodes.value] <optimize=false>;    
     CInt num_1;
     struct {
+        // could be related to zones (?)
         ubyte x1, x2, x3, x4;
         Assert(x1 == 0 && x2 == 0 && x3 == 0);
         ubyte b1, b2, b3, b4;

@@ -1,0 +1,58 @@
+//------------------------------------------------
+//--- 010 Editor v16 Binary Template
+//
+//      File: Nocturne_DFM.bt
+//   Purpose: Inspect Terminal Reality Nocturne-engine .DFM deformable model files.
+//  Encoding: Shipped Nocturne/BW1/BW2/BW3 .DFM files are ASCII text, version 7.
+//            No binary .DFM files were found in the four tested game corpora.
+//
+// Notes:
+// - DFM stores skeletal/deformable actor mesh geometry and LODs. It references
+//   an external .SKL skeleton and differs from .KFM by storing weighted
+//   bone-local vertex positions instead of full per-frame vertex arrays.
+// - Triangle vertex indices are LOD-local.
+// - Triangle UV fields are 32-bit integers on disk; the game loader stores
+//   each as (input >> 8) into 16-bit runtime face fields.
+// - DFM render submission builds 60-byte MRGL-style triangle primitives at
+//   runtime, using only vertex indices because UVs already live in the
+//   deformed vertex buffer/face data.
+//------------------------------------------------
+
+LittleEndian();
+
+typedef struct {
+    int VersionOrMagic;
+    if (FTell() < FileSize())
+        uchar Payload[FileSize() - FTell()];
+} DFM_UNKNOWN_BINARY_FILE;
+
+local int64 FileStart = FTell();
+uchar Probe0;
+uchar Probe1;
+FSeek(FileStart);
+
+if (Probe0 == '/' && Probe1 == '/') {
+    // Text DFM version 7 grammar:
+    //   version
+    //   lodCount,textureSetCount,textureCount,boneCount,partCount
+    //   lod[lodCount]: vertexCount,triCount,capTriCount,pixelHeight,shadowOnlyFlag
+    //   skeletonFile
+    //   part[partCount]: "partName", dominantBone[, adjPartCount]
+    //     adjPart[adjPartCount]
+    //     lodPart[lodCount]: triCount,capTriCount
+    //   vertex lists, LOD-major:
+    //     influenceCount
+    //     influence[influenceCount]: boneIndex,weight,x,y,z
+    //   triangle lists, LOD-major:
+    //     textureIndex, v0,u0,v0, v1,u1,v1, v2,u2,v2
+    //   capTriPart lists, LOD-major
+    //   texture names: textureSetCount * textureCount rows
+    //   boneOrigin[boneCount]: x,y,z
+    //   modelScale: x,y,z
+    //   bboxPool0Min: x,y,z
+    //   partForBoneList[boneCount]
+    char TextDfm[FileSize() - FileStart];
+} else {
+    // Present only as a guard: no binary .DFM corpus sample is currently known.
+    DFM_UNKNOWN_BINARY_FILE BinaryDfm;
+}

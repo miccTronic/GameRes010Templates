@@ -1,0 +1,62 @@
+//------------------------------------------------
+//--- 010 Editor v16 Binary Template
+//
+//      File: Nocturne_SKL.bt
+//   Purpose: Inspect Terminal Reality Nocturne-engine .SKL skeleton files.
+//  Encoding: Shipped Nocturne/BW1/BW2/BW3 .SKL files are text-based.
+//            Skeleton v4 is hybrid: text header/bone list, then a raw
+//            little-endian float32 quaternion bank, then text resumes.
+//
+// Notes:
+// - SKL stores the hierarchy, stored pose frame bank, root offsets,
+//   canceled/root-motion offsets, motion/state graph, signals, markers,
+//   and reference bone origins used by .DFM skeletal models.
+// - Quaternions are frame-major, bone-major, in w,x,y,z order.
+// - Motion-list v3 adds frameResolution and storedFrameCount per motion.
+//   Its motion frameCount is logical playback frames; storedFrameCount is
+//   normally ceil(frameCount / frameResolution).
+// - Fully parsing the text grammar in 010 would require a custom tokenizer;
+//   this template safely distinguishes the text/hybrid form and documents
+//   the layout while exposing the complete payload.
+//------------------------------------------------
+
+LittleEndian();
+
+typedef struct {
+    int VersionOrMagic;
+    if (FTell() < FileSize())
+        uchar Payload[FileSize() - FTell()];
+} SKL_UNKNOWN_BINARY_FILE;
+
+local int64 FileStart = FTell();
+uchar Probe0;
+uchar Probe1;
+FSeek(FileStart);
+
+if (Probe0 == '/' && Probe1 == '/') {
+    // Text/hybrid SKL grammar:
+    //   skeletonVersion
+    //   boneCount,storedFrameCount
+    //   bone[boneCount]: "boneName",parentIndex
+    //   angle list:
+    //     v2/v3: storedFrameCount * boneCount text rows of w,x,y,z
+    //     v4:    storedFrameCount * boneCount * 4 little-endian float32
+    //   rootOffset[storedFrameCount]: x,y,z
+    //   canceledMovement[storedFrameCount]: x,y,z
+    //   motionListVersion
+    //   stateCount; stateName[stateCount]
+    //   motionCount; repeated motion records:
+    //     "motionName",fps,stateIndex,frameStart,logicalFrameCount
+    //     exitForwardFromFrameNumber,exitForwardToMotionNumber,exitForwardToFrameNumber
+    //     exitForwardCmd,exitForwardTweenTime,exitForwardSetNewStateAsDesired
+    //     exitBackwardToMotionNumber,exitBackwardToFrameNumber
+    //     [motionListVersion >= 3] frameResolution,storedFrameCount
+    //     transitionCount; transitions: desiredState,cmd,toMotionNumber,toFrameNumber,tweenTime,setNewStateAsDesired
+    //     signalCount; signals: frameNumber,value
+    //     [motionListVersion >= 2] markerCount, marker list
+    //   [skeletonVersion >= 3] referenceBoneOrigin[boneCount]: x,y,z
+    char TextOrHybridSkl[FileSize() - FileStart];
+} else {
+    // Present only as a guard: no fully binary .SKL corpus sample is currently known.
+    SKL_UNKNOWN_BINARY_FILE BinarySkl;
+}

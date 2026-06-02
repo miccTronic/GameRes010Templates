@@ -1,0 +1,109 @@
+//------------------------------------------------
+//--- 010 Editor v16 Binary Template
+//
+//      File: Nocturne_SET.bt
+//   Purpose: Inspect Terminal Reality Nocturne-engine .SET scene descriptor files.
+//  Encoding: Shipped Nocturne .SET files are ASCII text version 26.
+//            Shipped BW1/BW2/BW3 .SET files are ASCII text version 31.
+//            No binary .SET files were found in the four tested game corpora.
+//
+// Notes:
+// - SET is the playable scene graph descriptor. It declares the DATA .GEO
+//   geometry filename, cameras/backdrops, projected/static lights, fog, water,
+//   sky/weather, room/reverb metadata, virtual-director boxes, and PVS tail.
+// - Resolve scene geometry from the declared geometry filename, not from the
+//   SET basename. BW2 has examples such as 86RAVINE01.SET -> RAVINE01.geo.
+// - Camera names map to BACKDROP/<camera>.RAW, .ACT, and optional .FOG.
+// - Light filter texture names generally reference ART .RAW images.
+// - Version 31 inserts a four-float environment vector before global fog,
+//   water wave fields after waterHeight/waterTileSize, and northHeading after
+//   weatherType.
+// - Fog flag 0 inside a camera record means an inline per-camera fog block
+//   follows. BW3 uses this in v31 data, so do not restrict it to v26.
+// - Light filter records are duration,index,texture rows; do not consume a
+//   separate blend-value line after blendFilter.
+// - PVS list is exactly cameraCount blocks for v20+: count then count IDs.
+// - Fully tokenizing this line/comment grammar in a 010 template would require
+//   a custom text tokenizer; this template exposes the full payload and
+//   documents the known layout for inspection.
+//------------------------------------------------
+
+LittleEndian();
+
+// Text .SET layout used by Nocturne, Blair Witch 1, Blair Witch 2, and Blair Witch 3:
+//
+//   version                              26 for Nocturne, 31 for BW1/BW2/BW3
+//   scaleFactor
+//   legacyActName
+//   geometryFileName                     DATA .GEO stem; may differ from .SET basename
+//   minAmbient
+//   envVector4                           version >= 31 only
+//   fog block:
+//     // fogR, fogG, fogB
+//     r,g,b
+//     // fogVel
+//     vx,vy,vz
+//     heightThreshold,densityMultiplier
+//     temperature                        version >= 26
+//   // waterHeight,waterTileSize
+//   waterHeight,waterTileSize
+//   // waterWaveHeight,waterTimePerFrame,waterMoveX,waterMoveY
+//   waterWaveHeight,waterTimePerFrame,waterMoveX,waterMoveY    version >= 31
+//   // useEnviroModel, enviroModelName
+//   useEnviroModel,enviroModelName
+//   // transparentWaterFlag
+//   transparentWaterFlag
+//   // hasSky
+//   hasSky
+//   skyBrightness,skyTexture
+//   // useWorldGeometryFlag, worldGeometryName
+//   useWorldGeometryFlag,worldGeometryName
+//   // weatherType
+//   weatherType
+//   // northHeading
+//   northHeading                          version >= 31
+//   // lightCount
+//   lightCount
+//   light[lightCount]:
+//     name, position, orientation, fov, aspect, intensity, type
+//     color/attenuation, size, filters, motion, timing, visibility rows
+//   // cameraCount
+//   cameraCount
+//   camera[cameraCount]:
+//     name, position, orientation, fov, vmat rows, fogFlag
+//     optional inline fog block when fogFlag == 0
+//     boxMin, boxMax, reverbPreset
+//   // Room size info
+//   defaultRoomSize
+//   roomCount
+//   room[roomCount]
+//   // Default ground type
+//   defaultGroundType
+//   // Default master reverb
+//   defaultMasterReverb
+//   // Virtual director boxes
+//   virtualDirectorBoxCount
+//   virtualDirectorBox[virtualDirectorBoxCount]
+//   // PVS list
+//   pvsBlock[cameraCount]: count followed by count visible camera IDs
+
+typedef struct
+{
+    int VersionOrMagic <comment="No shipped binary .SET files found; this is only a guard view for unexpected files.">;
+    if (FTell() < FileSize())
+        uchar Payload[FileSize() - FTell()] <comment="Unparsed payload.">;
+} SET_UNKNOWN_BINARY_FILE;
+
+local int64 start = FTell();
+uchar Probe0 <hidden=true>;
+uchar Probe1 <hidden=true>;
+FSeek(start);
+
+if ((Probe0 == '/' && Probe1 == '/') || Probe0 == '-' || Probe0 == '+' || Probe0 == '.' || (Probe0 >= '0' && Probe0 <= '9'))
+{
+    char TextSet[FileSize() - start] <comment="ASCII .SET text payload; see grammar comments above.">;
+}
+else
+{
+    SET_UNKNOWN_BINARY_FILE BinarySet;
+}

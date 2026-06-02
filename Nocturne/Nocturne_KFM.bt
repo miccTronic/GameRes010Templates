@@ -1,0 +1,103 @@
+//------------------------------------------------
+//--- 010 Editor v16 Binary Template
+//
+//      File: Nocturne_KFM.bt
+//   Purpose: Parse Terminal Reality Nocturne-engine .KFM keyframed model files.
+//  Encoding: Text KFM versions 5-8 are ASCII and are displayed as text.
+//            Binary KFM versions 3-4 are parsed as little-endian structures.
+//
+// Notes:
+// - KFM stores static/vertex-morphed prop meshes. Animation is full per-frame
+//   vertex arrays rather than skeletal skinning.
+// - Vertex coordinates are signed fixed point; divide by 256 for model units.
+// - UV coordinates are signed 16.16 fixed point; divide by 65536.
+// - Binary polygon records are 0x48-byte MRGL-style quad primitives:
+//   type, element count, 4-int plane/normal block, then four vertex/UV slots.
+//------------------------------------------------
+
+LittleEndian();
+
+typedef struct {
+    int X;
+    int Y;
+    int Z;
+} KFM_VECTOR3I;
+
+typedef struct {
+    int VertexIndex;
+    int U;
+    int V;
+} KFM_POLYGON_VERTEX;
+
+typedef struct {
+    int A;
+    int B;
+    int C;
+    int D;
+} KFM_CLIP_PLANE;
+
+typedef struct {
+    int Type;
+    int ElementCount;
+    KFM_CLIP_PLANE SurfaceNormal;
+    KFM_POLYGON_VERTEX Vertex[4];
+} KFM_BINARY_POLYGON_RECORD;
+
+typedef struct {
+    uchar Raw[0x18];
+} KFM_BINARY_TEXTURE_RECORD;
+
+typedef struct {
+    int VertexCount;
+    int PolygonCount;
+} KFM_PART;
+
+typedef struct {
+    int Version;
+    int VertexCount;
+    int PolygonCount;
+    int TextureCount;
+    int PartCount;
+    int FrameCount;
+
+    // Version 4 adds this flag. Version 3 starts the vertex block immediately.
+    if (Version >= 4)
+        int UseCollisionListFlag;
+
+    if (VertexCount > 0 && FrameCount > 0)
+        KFM_VECTOR3I Vertices[VertexCount * FrameCount];
+
+    if (PolygonCount > 0) {
+        KFM_BINARY_POLYGON_RECORD PolygonRecords[PolygonCount];
+        int PolygonTextureIndices[PolygonCount];
+    }
+
+    if (TextureCount > 0)
+        KFM_BINARY_TEXTURE_RECORD TextureRecords[TextureCount];
+
+    if (PartCount > 0)
+        KFM_PART Parts[PartCount];
+
+    if (FTell() < FileSize())
+        uchar TrailingBytes[FileSize() - FTell()];
+} KFM_BINARY_FILE;
+
+local int64 FileStart = FTell();
+uchar Probe0;
+uchar Probe1;
+FSeek(FileStart);
+
+if (Probe0 == '/' && Probe1 == '/') {
+    // Text KFM layout:
+    //   version
+    //   vertexCount,polyCount,textureCount,partCount,frameCount
+    //   useCollisionListFlag
+    //   [v6+] transparentPixelFlag
+    //   [v8+] disableBackfaceCulling
+    //   [v7+] envMapListFlag
+    //   vertex rows, polygon rows, optional env-map opacity rows,
+    //   texture-name rows, part rows.
+    char TextKfm[FileSize() - FileStart];
+} else {
+    KFM_BINARY_FILE Kfm;
+}

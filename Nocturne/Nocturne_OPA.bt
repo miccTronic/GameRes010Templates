@@ -1,0 +1,19 @@
+//------------------------------------------------
+// Nocturne Engine OPA Alpha Plane Template
+// Games: Nocturne, Blair Witch 1, Blair Witch 2, Blair Witch 3
+//
+// OPA is a headerless 8-bit alpha plane paired with a same-stem RAW file.
+// Values are literal alpha samples at the paired RAW byte offset. Intermediate
+// alpha values are meaningful and should not be thresholded.
+//------------------------------------------------
+
+LittleEndian();
+
+local int FileLength = FileSize();
+
+typedef struct
+{
+    uchar Alpha[FileLength] <optimize=true>;
+} NOCTURNE_OPA_FILE;
+
+NOCTURNE_OPA_FILE Opacity;

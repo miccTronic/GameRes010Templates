@@ -1,0 +1,89 @@
+//------------------------------------------------
+//--- 010 Editor v16 Binary Template
+//
+//      File: Nocturne_MSN.bt
+//   Purpose: Inspect Terminal Reality Nocturne-engine .MSN mission/save-state files.
+//  Encoding: Shipped Nocturne/BW1/BW2/BW3 .MSN files are ASCII text, mission version 7, actor version 4.
+//            No binary .MSN files were found in the four tested corpora.
+//
+// Notes:
+// - Mission instance/save-state layer: set list, actor class version map,
+//   world actor name list, inventory actor lookup rows, raw actor data blocks,
+//   and gore/debris persistence.
+// - actorTypeList versions are runtime compatibility gates; the EXE errors if a
+//   mission actor class version is newer than supported.
+// - World actors have top-level blocks in the actor data list. Inventory actors
+//   are listed for lookup but their data is embedded in owner inventory blocks.
+// - Actor blocks are polymorphic by class and class-version. Preserve raw blocks
+//   for unknown schemas.
+// - Runtime has only four set name slots despite the file storing a count.
+// - Gore is loaded only for missionVersion > 6.
+// - Fully tokenizing this line/comment grammar in a 010 template would require a
+//   custom text tokenizer; this template exposes the full payload and documents
+//   the known layout for inspection.
+//------------------------------------------------
+
+LittleEndian();
+
+// Text .MSN layout used by Nocturne, Blair Witch 1, Blair Witch 2, and Blair Witch 3:
+//
+//   // mission version, actor version
+//   missionVersion,actorVersion
+//   // Root name of mission
+//   missionName
+//   // setList
+//   setCount
+//   setName[setCount]
+//   // actorTypeList                 present when missionVersion > 2
+//   actorTypeCount
+//   className classVersion[actorTypeCount]
+//   // actor count
+//   worldActorCount
+//   // inventory actor count          present when missionVersion >= 6
+//   inventoryActorCount
+//   // actor name list
+//   world actor reference rows[worldActorCount]
+//   inventory actor reference rows[inventoryActorCount]
+//   // actor data list
+//   actor blocks[worldActorCount]     brace-delimited, polymorphic by actor class
+//   --- Gore ---                      present when missionVersion > 6
+//   bloodPoolCount
+//   blood pool records
+//   bloodSplatCount
+//   blood splat records
+//
+// Actor reference rows begin with class name followed by a quoted actor name.
+// Additional tokens may follow and are actor/runtime specific.
+//
+// Gore blood pool record:
+//   position.x, position.y, position.z
+//   expired, bloodType
+//   textureVariant, age, fixedPosition.x, fixedPosition.y, fixedPosition.z
+//
+// Gore blood splat record:
+//   position.x, position.y, position.z
+//   expired, bloodType, bloodPart
+//   rotation.x, rotation.z, rotation.y
+//   textureVariant, fixedPosition.x, fixedPosition.y, fixedPosition.z,
+//                   fixedNormal.x, fixedNormal.y, fixedNormal.z
+
+typedef struct
+{
+    int VersionOrMagic <comment="No shipped binary .MSN files found; this is only a guard view for unexpected files.">;
+    if (FTell() < FileSize())
+        uchar Payload[FileSize() - FTell()] <comment="Unparsed payload.">;
+} MSN_UNKNOWN_BINARY_FILE;
+
+local int64 start = FTell();
+uchar Probe0 <hidden=true>;
+uchar Probe1 <hidden=true>;
+FSeek(start);
+
+if ((Probe0 == '/' && Probe1 == '/') || Probe0 == '-' || Probe0 == '+' || Probe0 == '.' || (Probe0 >= '0' && Probe0 <= '9'))
+{
+    char TextMsn[FileSize() - start] <comment="ASCII .MSN text payload; see grammar comments above.">;
+}
+else
+{
+    MSN_UNKNOWN_BINARY_FILE BinaryMsn;
+}
