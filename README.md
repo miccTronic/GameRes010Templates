@@ -15,10 +15,12 @@ Games for which you will find at least _some_ data file parsing support:
 	* Nocturne
 	* Blair Witch I/II/III
 * King's Quest VIII: The Mask of Eternity
+* Deadly Premonition (tested with 2013's Director's Cut)
 
 ... to be expanded continuously. :-)
 
 Possible only with the help of many great individuals of the modding and res-haxing community.
+
 Some templates have also been assembled with assistance from AI tools (CODEX). This has usually been indicates in the .bt file.
 
 If you have any fixes or other contributions, feel free to create an issue or a send a pull request!

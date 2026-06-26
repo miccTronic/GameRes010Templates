@@ -1,0 +1,111 @@
+#include "..\!Shared.bt"
+#include "DeadlyPremonition_Shared.bt"
+
+// Deadly Premonition decompressed .XAM files produced from MOTION .XAM containers.
+// Layout: original XAM2 header + original node table + concatenated inflated XZP1 animation payloads.
+// header.ticksPerSample is currently interpreted as the timeline spacing between stored transform samples.
+
+const uint DP_XAM_MARKER = 0x02000000;
+
+typedef struct
+{
+    short xRaw;
+    short yRaw;
+    short zRaw;
+    local float x = xRaw / 32767.0;
+    local float y = yRaw / 32767.0;
+    local float z = zRaw / 32767.0;
+    // Reconstruct quaternion w as sqrt(1 - x*x - y*y - z*z), sign currently unknown.
+} CmpQuat3 <read=Str("quat3 (%f, %f, %f, w+)", this.x, this.y, this.z), fgcolor=0x008080>;
+
+typedef struct
+{
+    short xRaw;
+    short yRaw;
+    short zRaw;
+    short wRaw;
+    local float x = xRaw / 32767.0;
+    local float y = yRaw / 32767.0;
+    local float z = zRaw / 32767.0;
+    local float w = wRaw / 32767.0;
+} CmpQuat4 <read=Str("quat4 (%f, %f, %f, %f)", this.x, this.y, this.z, this.w), fgcolor=0x008080>;
+
+
+
+DpXam2Header header;
+Assert(header.nodeTableOffset == 0x50 && header.trackCount > 0);
+DpXamNode nodes[header.trackCount] <optimize=false>;
+Assert(FTell() == header.firstBlockOffset);
+
+typedef struct
+{
+    ushort count <bgcolor=0x80A0EE>;
+    ubyte format <bgcolor=0xA0C8FF>;
+    Assert(format == 0 || format == 1 || format == 3);
+    BoolInt8 missingFlag <bgcolor=0xD0F0FF>;
+    //Assert(missingFlag == 0 || missingFlag == 1);
+
+    local uint dataStart <hidden=true> = FTell();
+    if (format == 1) CmpQuat3 quat3[count] <optimize=false>;
+    else if (format == 3) CmpQuat4 quat4[count] <optimize=false>;
+    else if (format == 0) Vector3 vec3[count] <optimize=false>;
+    else { Warning(Str("Unsupported format for fmt = %i, missingFlag = %i", format, missingFlag)); Exit(-1); }
+    AlignTo(FTell() - dataStart, 4);
+} DpAnimTrackChannel <read=Str("Channel: fmt = %i   missingFlag = %i   count = %i", format, missingFlag.value, count)>;
+
+local int numTrackGroups <hidden=true> = 0;
+local int numNoScaleMarkers = 0;
+local int numScaleChannels = 0;
+
+typedef struct(int trackIndex)
+{
+    local int hasScale <hidden=true> = 0;
+    local int scaleCount <hidden=true> = 0;
+    local int numScaleChannelsLocal <hidden=true> = 0;
+    local int hasNoScaleMarker <hidden=true> = 0;
+    local string debugScale = "";
+
+    DpAnimTrackChannel quat;
+    Assert(quat.format == 1 || quat.format == 3);
+    DpAnimTrackChannel pos;
+    Assert(pos.format == 0);
+
+    if (trackIndex + 1 < header.trackCount) {
+        if (ReadUInt() == DP_XAM_MARKER) {
+            uint noScaleMarker <format=hex, bgcolor=0x4040A0, fgcolor=cWhite>;
+            Assert(noScaleMarker == DP_XAM_MARKER);
+            hasNoScaleMarker = 1;
+            numNoScaleMarkers++;
+        } else {
+            // Scale channel detected!
+            DpAnimTrackChannel scale;
+            Assert(scale.format == 0);
+            hasScale = 1;
+            scaleCount = scale.count;
+            numScaleChannels++; numScaleChannelsLocal++;
+            debugScale = Str("%i * scale=%i (%i/%i)", numScaleChannelsLocal, scaleCount, scale.format, scale.missingFlag.value);
+        }
+    }
+} DpAnimTrack <read=Str("Track: quat=%i (%i/%i)   pos=%i (%i/%i)   %s", quat.count, quat.format, quat.missingFlag.value, pos.count, pos.format, pos.missingFlag.value, debugScale)>;
+
+typedef struct(int groupIndex)
+{
+    local int myGroupIndex <hidden=true> = groupIndex;
+    local int trackIndex <hidden=true>;
+    uint groupMarker <format=hex, bgcolor=0x4040A0, fgcolor=cWhite>;
+    Assert(groupMarker == DP_XAM_MARKER);
+
+    for (trackIndex = 0; trackIndex < header.trackCount; trackIndex++)
+    {
+        DpAnimTrack track(trackIndex) <optimize=false>;
+    }
+} DpAnimTrackGroup <read=Str("Track Group %i", myGroupIndex)>;
+
+
+
+
+if (ReadUInt() != DP_XAM_MARKER) Exit(-1);
+while (!FEof()) {
+    DpAnimTrackGroup group(numTrackGroups) <optimize=false>;
+    numTrackGroups++;
+}

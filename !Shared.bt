@@ -135,6 +135,16 @@ typedef struct
     comment=Str("#%02X%02X%02X%02X", this.r, this.g, this.b, this.a)>;
 
 typedef struct {
+    ubyte value; Assert(value == 0 || value == 1);
+} BoolInt8 <fgcolor=0x8000FF>;
+typedef struct {
+    uint value; Assert(value == 0 || value == 1);
+} BoolInt16 <fgcolor=0x8000FF>;
+typedef struct {
+    ushort value; Assert(value == 0 || value == 1);
+} BoolInt32 <fgcolor=0x8000FF>;
+
+typedef struct {
     byte zero; Assert(zero == 0);
 } ZeroInt8 <bgcolor=cDkGray, fgcolor=cGray>;
 typedef struct {
