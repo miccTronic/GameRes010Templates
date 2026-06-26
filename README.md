@@ -16,6 +16,8 @@ Games for which you will find at least _some_ data file parsing support:
 	* Blair Witch I/II/III
 * King's Quest VIII: The Mask of Eternity
 * Deadly Premonition (tested with 2013's Director's Cut)
+* CryEngine
+	* Prey (2017)
 
 ... to be expanded continuously. :-)
 
